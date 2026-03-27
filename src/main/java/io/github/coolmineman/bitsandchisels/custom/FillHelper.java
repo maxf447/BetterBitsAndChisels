@@ -12,8 +12,7 @@ public class FillHelper {
 
     // Fills an area specified by corners in blocks (x1, y1, z1) and (x2, y2, z2)
     // TODO: Maximum chunks
-    public static void fillBlocks(ClientPlayerEntity player, int x1, int y1, int z1, int x2, int y2, int z2, boolean mainhand, boolean breakPacket) {
-        BlockPos pos = player.getBlockPos();
+    public static void fillBlocks(BlockPos pos, int x1, int y1, int z1, int x2, int y2, int z2, boolean mainhand, boolean breakPacket) {
 
         // Find min/max corners relative to player position, in relative bits
         int minX = 16 * (Math.min(x1, x2) - pos.getX());
@@ -24,12 +23,12 @@ public class FillHelper {
         int maxZ = 16 * (Math.max(z1, z2) - pos.getZ()) + 15;
 
         // Fill area in bits
-        fillBits(player, minX, minY, minZ, maxX, maxY, maxZ, mainhand, breakPacket);
+        fillBits(pos, minX, minY, minZ, maxX, maxY, maxZ, mainhand, breakPacket);
     }
 
     // Fills an area specified by bits offset corners (x1, y1, z1) and (x2, y2, z2) and an origin pos (must be sorted)
-    public static void fillBits(ClientPlayerEntity player, int x1, int y1, int z1, int x2, int y2, int z2, boolean mainhand, boolean breakPacket) {
-        sendPacket(player.getBlockPos(), x1, y1, z1, x2, y2, z2, mainhand, breakPacket);
+    public static void fillBits(BlockPos pos, int x1, int y1, int z1, int x2, int y2, int z2, boolean mainhand, boolean breakPacket) {
+        sendPacket(pos, x1, y1, z1, x2, y2, z2, mainhand, breakPacket);
     }
 
     // Sends a single packet to break or fill an area of bits from (x1, y1, z1) to (x2, y2, z2) ([xyz]1 must be < [xyz]2 for each axis)

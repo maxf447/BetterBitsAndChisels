@@ -96,7 +96,7 @@ public class CommandParser {
                 if (CommandConfig.maxVolumeCommands < 1)
                     player.sendMessage(Text.literal(String.format("Command exceeds maxVolumeCommands of %s!", CommandConfig.maxVolumeCommands)));
                 else {
-                    FillHelper.fillBlocks(player, x, y, z, x, y, z, true, breakPacket);
+                    FillHelper.fillBlocks(player.getBlockPos(), x, y, z, x, y, z, true, breakPacket);
                     player.sendMessage(Text.literal("Success."));
                 }
             }
@@ -123,7 +123,7 @@ public class CommandParser {
                 if (CommandConfig.maxVolumeCommands < (Math.abs(x2 - x1) + 1) * (Math.abs(y2 - y1) + 1) * (Math.abs(z2 - z1) + 1))
                     player.sendMessage(Text.literal(String.format("Command exceeds maxVolumeCommands of %s!", CommandConfig.maxVolumeCommands)));
                 else {
-                    FillHelper.fillBlocks(player, x1, y1, z1, x2, y2, z2, true, breakPacket);
+                    FillHelper.fillBlocks(player.getBlockPos(), x1, y1, z1, x2, y2, z2, true, breakPacket);
                     player.sendMessage(Text.literal("Success."));
                 }
             }

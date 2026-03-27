@@ -204,7 +204,7 @@ public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayCh
                     // Only fill if volume is smaller than maximum
                     double volume = (double) (maxx - minx + 1) * (maxy - miny + 1) * (maxz - minz + 1) / 4096;
                     if (volume <= CommandConfig.maxVolumeManual)
-                        FillHelper.fillBits(client.player, minx, miny, minz, maxx, maxy, maxz, true, true);
+                        FillHelper.fillBits(block, minx, miny, minz, maxx, maxy, maxz, true, true);
                     haspos1 = false;
                 }
                 return ActionResult.SUCCESS;
