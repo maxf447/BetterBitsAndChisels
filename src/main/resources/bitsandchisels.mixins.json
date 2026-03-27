@@ -11,7 +11,8 @@
     "RedSelectionBoxMixin",
     "BakedQuadAccessor",
     "BlockStateMixin",
-    "AddedReachMixin"
+    "AddedReachMixin",
+    "ToggleFullBlockMixin"
   ],
   "injectors": {
     "defaultRequire": 1

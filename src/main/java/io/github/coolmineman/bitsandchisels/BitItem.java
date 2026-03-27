@@ -2,6 +2,7 @@ package io.github.coolmineman.bitsandchisels;
 
 import io.github.coolmineman.bitsandchisels.api.BitUtils;
 import io.github.coolmineman.bitsandchisels.api.client.RedBoxCallback;
+import io.github.coolmineman.bitsandchisels.chisel.SmartChisel;
 import io.github.coolmineman.bitsandchisels.custom.CommandConfig;
 import io.github.coolmineman.bitsandchisels.custom.FillHelper;
 import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
@@ -48,8 +49,13 @@ public class BitItem extends Item implements ServerPlayNetworking.PlayChannelHan
         ServerPlayNetworking.registerGlobalReceiver(PACKET_ID, this);
         // Reset selection on left click
         AttackBlockCallback.EVENT.register((player, world, hand, pos, direction) -> {
-            haspos1 = false;
-            return ActionResult.SUCCESS;
+            Item i = player.getStackInHand(hand).getItem();
+            if (i instanceof BitItem) {
+                if (!world.isClient) return ActionResult.FAIL;
+                haspos1 = false;
+                return ActionResult.CONSUME;
+            }
+            return ActionResult.PASS;
         });
     }
 
@@ -189,9 +195,9 @@ public class BitItem extends Item implements ServerPlayNetworking.PlayChannelHan
                         maxz = Math.floorDiv(maxz, 16) * 16 + 15;
                     }
 
-                    // Only draw if volume is smaller than maximum
+                    // Only draw if volume is smaller than maximum and pos is valid
                     double volume = (double) (maxx - minx + 1) * (maxy - miny + 1) * (maxz - minz + 1) / 4096;
-                    if (volume <= CommandConfig.maxVolumeManual)
+                    if (volume <= CommandConfig.maxVolumeManual && client.player.getBlockPos().getSquaredDistance(block) < 81)
                         redBoxDrawer.drawRedBox(matrixStack, vertexConsumer, block, minx, miny, minz, maxx + 1, maxy + 1, maxz + 1, worldoffsetx, worldoffsety, worldoffsetz);
 
                     // Display HUD text
@@ -205,7 +211,7 @@ public class BitItem extends Item implements ServerPlayNetworking.PlayChannelHan
                                 df.format((double) (maxz - minz + 1) / 16),
                                 df.format(volume),
                                 volume == 1 ? "" : "s",
-                                df.format(69)
+                                df.format(FillHelper.splitRegion(minx, miny, minz, maxx, maxy, maxz).size())
                         ));
                         client.inGameHud.setOverlayMessage(text.formatted(volume <= CommandConfig.maxVolumeManual ? Formatting.GREEN : Formatting.RED), false);
                     }

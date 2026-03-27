@@ -7,6 +7,9 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.Identifier;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
+
 
 public class FillHelper {
 
@@ -28,7 +31,13 @@ public class FillHelper {
 
     // Fills an area specified by bits offset corners (x1, y1, z1) and (x2, y2, z2) and an origin pos (must be sorted)
     public static void fillBits(BlockPos pos, int x1, int y1, int z1, int x2, int y2, int z2, boolean mainhand, boolean breakPacket) {
-        sendPacket(pos, x1, y1, z1, x2, y2, z2, mainhand, breakPacket);
+        // Split into regions
+        ArrayList<int[]> regions = splitRegion(x1, y1, z1, x2, y2, z2);
+        // Send packets for each region
+        for (int[] r : regions) {
+            System.out.printf("Splitting region (%s, %s, %s) -> (%s, %s, %s)...\n", r[0], r[1], r[2], r[3], r[4], r[5]);
+            sendPacket(pos, r[0], r[1], r[2], r[3], r[4], r[5], mainhand, breakPacket);
+        }
     }
 
     // Sends a single packet to break or fill an area of bits from (x1, y1, z1) to (x2, y2, z2) ([xyz]1 must be < [xyz]2 for each axis)
@@ -46,4 +55,53 @@ public class FillHelper {
         ClientPlayNetworking.send(new Identifier("bitsandchisels", breakPacket ? "smart_chisel_packet" : "bit_packet"), packet);
     }
 
+    // Takes a single volume (in bits) and splits it into an array of smaller volumes that pass serverside checks and volume check
+    public static ArrayList<int[]> splitRegion(int x1, int y1, int z1, int x2, int y2, int z2) {
+        System.out.printf("Splitting region (%s, %s, %s) -> (%s, %s, %s)...\n", x1, y1, z1, x2, y2, z2);
+        ArrayList<int[]> regions = new ArrayList<>();
+        // Volume fails server side sum of squares check
+        if ((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1) > 1000000) {
+            System.out.printf("Failed server side check! Splitting along longest axis... ");
+            // Split in half along longest access and recurse
+            if (x2 - x1 > y2 - y1 && x2 - x1 > z2 - z1) {
+                System.out.println("x axis");
+                regions.addAll(splitRegion(x1, y1, z1, x1 + (x2 - x1) / 2, y2, z2));
+                regions.addAll(splitRegion(x1 + (x2 - x1) / 2 + 1, y1, z1, x2, y2, z2));
+            }
+            else if (z2 - z1 > y2 - y1 && z2 - z1 > x2 - x1) {
+                System.out.println("y axis");
+                regions.addAll(splitRegion(x1, y1, z1, x2, y2, z1 + (z2 - z1) / 2));
+                regions.addAll(splitRegion(x1, y1, z1 + (z2 - z1) / 2 + 1, x2, y2, z2));
+            }
+            else {
+                System.out.println("z axis");
+                regions.addAll(splitRegion(x1, y1, z1, x2, y1 + (y2 - y1) / 2, z2));
+                regions.addAll(splitRegion(x1, y1 + (y2 - y1) / 2 + 1, z1, x2, y2, z2));
+            }
+        }
+
+        // Volume fails client side volume check
+        double volume = (double) (x2 - x1 + 1) * (y2 - y1 + 1) * (z2 - z1 + 1) / 4096;
+        if (volume > CommandConfig.maxChunkSize) {
+            // Split along y-axis into minimum number of regions to pass volume check
+            int regionCount = (int) Math.ceil(volume / CommandConfig.maxChunkSize);
+
+            // Add to regions list
+            int regionSize = Math.max(1, (y2 - y1) / regionCount);
+            int regionY = y1;
+
+            System.out.printf("Failed volume check! Splitting into %s regions of size %s...\n", regionCount, regionSize);
+            while (regionY <= y2) { // Getting stuck in endless loop - regionSize of 0?
+                System.out.printf("Generated region: (%s, %s, %s) -> (%s, %s, %s)\n", x1, regionY, z1, x2, Math.min(y2, regionY + regionSize - 1), z2);
+                regions.add(new int[]{x1, regionY, z1, x2, Math.min(y2, regionY + regionSize - 1), z2});
+                regionY += regionSize;
+            }
+        }
+        else {
+            System.out.println("Region is small enough");
+            regions.add(new int[]{x1, y1, z1, x2, y2, z2});
+        }
+
+        return regions;
+    }
 }

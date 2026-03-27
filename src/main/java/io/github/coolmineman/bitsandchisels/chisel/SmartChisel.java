@@ -117,7 +117,7 @@ public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayCh
                                 df.format((double) (maxz - minz + 1) / 16),
                                 df.format(volume),
                                 volume == 1 ? "" : "s",
-                                df.format(69)
+                                df.format(FillHelper.splitRegion(minx, miny, minz, maxx, maxy, maxz).size())
                         ));
                         client.inGameHud.setOverlayMessage(text.formatted(volume <= CommandConfig.maxVolumeManual ? Formatting.GREEN : Formatting.RED), false);
                     }
