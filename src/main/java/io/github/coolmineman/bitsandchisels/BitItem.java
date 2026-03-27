@@ -46,7 +46,7 @@ public class BitItem extends Item implements ServerPlayNetworking.PlayChannelHan
     public BitItem(Settings settings) {
         super(settings);
         ServerPlayNetworking.registerGlobalReceiver(PACKET_ID, this);
-        // Reset swing on left click
+        // Reset selection on left click
         AttackBlockCallback.EVENT.register((player, world, hand, pos, direction) -> {
             haspos1 = false;
             return ActionResult.SUCCESS;
@@ -302,7 +302,7 @@ public class BitItem extends Item implements ServerPlayNetworking.PlayChannelHan
                 // Only fill if volume is smaller than maximum
                 double volume = (double) (maxx - minx + 1) * (maxy - miny + 1) * (maxz - minz + 1) / 4096;
                 if (volume <= CommandConfig.maxVolumeManual)
-                    FillHelper.fillBits(block, minx, miny, minz, maxx, maxy, maxz, context.getHand().equals(Hand.MAIN_HAND), false);
+                    FillHelper.fillBits(client.player, minx, miny, minz, maxx, maxy, maxz, context.getHand().equals(Hand.MAIN_HAND), false);
 
                 haspos1 = false;
                 return ActionResult.SUCCESS;

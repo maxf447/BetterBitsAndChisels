@@ -2,7 +2,6 @@ package io.github.coolmineman.bitsandchisels.chisel;
 
 import io.github.coolmineman.bitsandchisels.BitsAndChisels;
 import io.github.coolmineman.bitsandchisels.api.BitUtils;
-import io.github.coolmineman.bitsandchisels.api.client.AirSwingItem;
 import io.github.coolmineman.bitsandchisels.api.client.RedBoxCallback;
 import io.github.coolmineman.bitsandchisels.custom.CommandConfig;
 import io.github.coolmineman.bitsandchisels.custom.FillHelper;
@@ -10,7 +9,6 @@ import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.*;
 import net.minecraft.network.PacketByteBuf;
@@ -21,6 +19,7 @@ import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
@@ -30,7 +29,7 @@ import net.minecraft.world.World;
 
 import java.text.DecimalFormat;
 
-public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayChannelHandler, AirSwingItem {
+public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayChannelHandler {
     public static final Identifier PACKET_ID = new Identifier("bitsandchisels", "smart_chisel_packet");
 
     BlockPos block = null;
@@ -205,7 +204,7 @@ public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayCh
                     // Only fill if volume is smaller than maximum
                     double volume = (double) (maxx - minx + 1) * (maxy - miny + 1) * (maxz - minz + 1) / 4096;
                     if (volume <= CommandConfig.maxVolumeManual)
-                        FillHelper.fillBits(block, minx, miny, minz, maxx, maxy, maxz, true, true);
+                        FillHelper.fillBits(client.player, minx, miny, minz, maxx, maxy, maxz, true, true);
                     haspos1 = false;
                 }
                 return ActionResult.SUCCESS;
@@ -214,12 +213,14 @@ public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayCh
         return ActionResult.CONSUME;
     }
 
-    private static long getTime() {
-        return System.currentTimeMillis() / 50;
+    // Reset selection on right click
+    @Override
+    public ActionResult useOnBlock(ItemUsageContext context) {
+        haspos1 = false;
+        return ActionResult.SUCCESS;
     }
 
-    @Override
-    public void airSwing(ClientPlayerEntity player, ItemStack stack) {
-        this.haspos1 = false;
+    private static long getTime() {
+        return System.currentTimeMillis() / 50;
     }
 }
