@@ -4,8 +4,8 @@ import io.github.coolmineman.bitsandchisels.BitsAndChisels;
 import io.github.coolmineman.bitsandchisels.api.BitUtils;
 import io.github.coolmineman.bitsandchisels.api.client.AirSwingItem;
 import io.github.coolmineman.bitsandchisels.api.client.RedBoxCallback;
-import io.netty.buffer.Unpooled;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import io.github.coolmineman.bitsandchisels.custom.CommandConfig;
+import io.github.coolmineman.bitsandchisels.custom.FillHelper;
 import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -58,40 +58,51 @@ public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayCh
         RedBoxCallback.EVENT.register((redBoxDrawer, matrixStack, vertexConsumer, worldoffsetx, worldoffsety, worldoffsetz) -> {
             MinecraftClient client = MinecraftClient.getInstance();
             if (client.player.getMainHandStack().getItem() == BitsAndChisels.SMART_CHISEL) {
-                if (haspos1) {
-                    HitResult hit = client.crosshairTarget;
-                    if (hit.getType() == HitResult.Type.BLOCK) {
-                        Direction direction = ((BlockHitResult)hit).getSide();
-                        BlockPos pos = ((BlockHitResult)hit).getBlockPos();
-                        if (pos.getSquaredDistance(block) > 9) return;
-                        int x = (int) Math.floor(((hit.getPos().getX() - pos.getX()) * 16) + (direction.getOffsetX() * -0.5d));
-                        int y = (int) Math.floor(((hit.getPos().getY() - pos.getY()) * 16) + (direction.getOffsetY() * -0.5d));
-                        int z = (int) Math.floor(((hit.getPos().getZ() - pos.getZ()) * 16) + (direction.getOffsetZ() * -0.5d));
-                        
-                        int blockXOffset = pos.getX() - block.getX();
-                        int blockYOffset = pos.getY() - block.getY();
-                        int blockZOffset = pos.getZ() - block.getZ();
 
-                        int minx = Math.min(bitx, blockXOffset * 16 + x);
-                        int miny = Math.min(bity, blockYOffset * 16 + y);
-                        int minz = Math.min(bitz, blockZOffset * 16 + z);
+                HitResult hit = client.crosshairTarget;
+                if (hit.getType() == HitResult.Type.BLOCK) {
+                    Direction direction = ((BlockHitResult)hit).getSide();
+                    BlockPos pos = ((BlockHitResult)hit).getBlockPos();
 
-                        int maxx = Math.max(bitx, blockXOffset * 16 + x);
-                        int maxy = Math.max(bity, blockYOffset * 16 + y);
-                        int maxz = Math.max(bitz, blockZOffset * 16 + z);
-                        
+                    int x = (int) Math.floor(((hit.getPos().getX() - pos.getX()) * 16) + (direction.getOffsetX() * -0.5d));
+                    int y = (int) Math.floor(((hit.getPos().getY() - pos.getY()) * 16) + (direction.getOffsetY() * -0.5d));
+                    int z = (int) Math.floor(((hit.getPos().getZ() - pos.getZ()) * 16) + (direction.getOffsetZ() * -0.5d));
+
+                    if (!haspos1) {
+                        block = pos;
+                        bitx = x;
+                        bity = y;
+                        bitz = z;
+                    }
+
+                    // Only apply distance restriction if unlocked mode is disabled
+                    if (pos.getSquaredDistance(block) > 9 && !CommandConfig.unlockedMode) return;
+
+                    int blockXOffset = pos.getX() - block.getX();
+                    int blockYOffset = pos.getY() - block.getY();
+                    int blockZOffset = pos.getZ() - block.getZ();
+
+                    int minx = Math.min(bitx, blockXOffset * 16 + x);
+                    int miny = Math.min(bity, blockYOffset * 16 + y);
+                    int minz = Math.min(bitz, blockZOffset * 16 + z);
+
+                    int maxx = Math.max(bitx, blockXOffset * 16 + x);
+                    int maxy = Math.max(bity, blockYOffset * 16 + y);
+                    int maxz = Math.max(bitz, blockZOffset * 16 + z);
+
+                    // Adjust to full blocks if full blocks only is enabled
+                    if (CommandConfig.fullBlocksOnly) {
+                        minx = Math.floorDiv(minx, 16) * 16;
+                        miny = Math.floorDiv(miny, 16) * 16;
+                        minz = Math.floorDiv(minz, 16) * 16;
+                        maxx = Math.floorDiv(maxx, 16) * 16 + 15;
+                        maxy = Math.floorDiv(maxy, 16) * 16 + 15;
+                        maxz = Math.floorDiv(maxz, 16) * 16 + 15;
+                    }
+
+                    // Only draw if volume is smaller than maximum
+                    if ((maxx - minx + 1) * (maxy - miny + 1) * (maxz - minz + 1) / 4096 <= CommandConfig.maxVolumeManual)
                         redBoxDrawer.drawRedBox(matrixStack, vertexConsumer, block, minx, miny, minz, maxx + 1, maxy + 1, maxz + 1, worldoffsetx, worldoffsety, worldoffsetz);
-                    }
-                } else {
-                    HitResult hit = client.crosshairTarget;
-                    if (hit.getType() == HitResult.Type.BLOCK) {
-                        Direction direction = ((BlockHitResult)hit).getSide();
-                        BlockPos pos = ((BlockHitResult)hit).getBlockPos();
-                        int x = (int) Math.floor(((hit.getPos().getX() - pos.getX()) * 16) + (direction.getOffsetX() * -0.5d));
-                        int y = (int) Math.floor(((hit.getPos().getY() - pos.getY()) * 16) + (direction.getOffsetY() * -0.5d));
-                        int z = (int) Math.floor(((hit.getPos().getZ() - pos.getZ()) * 16) + (direction.getOffsetZ() * -0.5d));
-                        redBoxDrawer.drawRedBox(matrixStack, vertexConsumer, pos, x, y, z, x + 1, y + 1, z + 1, worldoffsetx, worldoffsety, worldoffsetz);
-                    }
                 }
             }
         });
@@ -130,14 +141,14 @@ public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayCh
             int z = (int) Math.floor(((hit.getPos().getZ() - pos.getZ()) * 16) + (direction.getOffsetZ() * -0.5d));
             lastBreakTick = getTime();
             if (BitUtils.exists(BitUtils.getBit(world, pos, x, y, z))) {
-                if (!haspos1 || pos.getSquaredDistance(block) > 9) {
+                // Only apply distance restriction if unlocked mode is disabled
+                if (!haspos1 || (pos.getSquaredDistance(block) > 9 && !CommandConfig.unlockedMode)) {
                     block = pos;
                     bitx = x;
                     bity = y;
                     bitz = z;
                     haspos1 = true;
                 } else {
-                    PacketByteBuf passedData = new PacketByteBuf(Unpooled.buffer());
 
                     int blockXOffset = pos.getX() - block.getX();
                     int blockYOffset = pos.getY() - block.getY();
@@ -151,14 +162,30 @@ public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayCh
                     int maxy = Math.max(bity, blockYOffset * 16 + y);
                     int maxz = Math.max(bitz, blockZOffset * 16 + z);
 
-                    passedData.writeBlockPos(block);
-                    passedData.writeInt(minx);
-                    passedData.writeInt(miny);
-                    passedData.writeInt(minz);
-                    passedData.writeInt(maxx);
-                    passedData.writeInt(maxy);
-                    passedData.writeInt(maxz);
-                    ClientPlayNetworking.send(PACKET_ID, passedData);
+                    // Adjust origin to player position if unlocked mode is enabled
+                    if (CommandConfig.unlockedMode) {
+                        minx += 16 * (block.getX() - player.getBlockX());
+                        miny += 16 * (block.getY() - player.getBlockY());
+                        minz += 16 * (block.getZ() - player.getBlockZ());
+                        maxx += 16 * (block.getX() - player.getBlockX());
+                        maxy += 16 * (block.getY() - player.getBlockY());
+                        maxz += 16 * (block.getZ() - player.getBlockZ());
+                        block = player.getBlockPos();
+                    }
+
+                    // Adjust to full blocks if full blocks only is enabled
+                    if (CommandConfig.fullBlocksOnly) {
+                        minx = Math.floorDiv(minx, 16) * 16;
+                        miny = Math.floorDiv(miny, 16) * 16;
+                        minz = Math.floorDiv(minz, 16) * 16;
+                        maxx = Math.floorDiv(maxx, 16) * 16 + 15;
+                        maxy = Math.floorDiv(maxy, 16) * 16 + 15;
+                        maxz = Math.floorDiv(maxz, 16) * 16 + 15;
+                    }
+
+                    // Only fill if volume is smaller than maximum
+                    if ((maxx - minx + 1) * (maxy - miny + 1) * (maxz - minz + 1) / 4096 <= CommandConfig.maxVolumeManual)
+                        FillHelper.fillBits(block, minx, miny, minz, maxx, maxy, maxz, true, true);
                     haspos1 = false;
                 }
                 return ActionResult.SUCCESS;

@@ -52,7 +52,9 @@ public class Buildscript extends SimpleFabricProject {
             {"fabric-events-interaction-v0", "0.6.0+b3afc78b77"},
             {"fabric-rendering-data-attachment-v1", "0.3.33+b3afc78b77"},
             {"fabric-lifecycle-events-v1", "2.2.20+b3afc78b77"},
-            {"fabric-mining-level-api-v1", "2.1.47+b3afc78b77"}
+            {"fabric-mining-level-api-v1", "2.1.47+b3afc78b77"},
+            {"fabric-message-api-v1", "5.1.9+f4b7e424df"}
+
         };
         for (String[] module : fapiModules) {
             d.addMaven(FabricMaven.URL, new MavenId(FabricMaven.GROUP_ID + ".fabric-api", module[0], module[1]), ModDependencyFlag.RUNTIME, ModDependencyFlag.COMPILE);

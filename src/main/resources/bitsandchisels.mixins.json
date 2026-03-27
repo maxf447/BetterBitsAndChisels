@@ -12,7 +12,8 @@
     "BakedQuadAccessor",
     "BlockStateMixin",
     "MinecraftClientMixin",
-    "ClientPlayerEntityMixin"
+    "ClientPlayerEntityMixin",
+    "AddedReachMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -2,8 +2,8 @@ package io.github.coolmineman.bitsandchisels;
 
 import io.github.coolmineman.bitsandchisels.api.BitUtils;
 import io.github.coolmineman.bitsandchisels.api.client.RedBoxCallback;
-import io.netty.buffer.Unpooled;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import io.github.coolmineman.bitsandchisels.custom.CommandConfig;
+import io.github.coolmineman.bitsandchisels.custom.FillHelper;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.block.BlockState;
@@ -150,23 +150,38 @@ public class BitItem extends Item implements ServerPlayNetworking.PlayChannelHan
                         z += 16;
                     }
 
-                    if (haspos1) {
-                        int blockXOffset = pos.getX() - block.getX();
-                        int blockYOffset = pos.getY() - block.getY();
-                        int blockZOffset = pos.getZ() - block.getZ();
-
-                        int minx = Math.min(bitx, blockXOffset * 16 + x);
-                        int miny = Math.min(bity, blockYOffset * 16 + y);
-                        int minz = Math.min(bitz, blockZOffset * 16 + z);
-
-                        int maxx = Math.max(bitx, blockXOffset * 16 + x);
-                        int maxy = Math.max(bity, blockYOffset * 16 + y);
-                        int maxz = Math.max(bitz, blockZOffset * 16 + z);
-                        
-                        redBoxDrawer.drawRedBox(matrixStack, vertexConsumer, block, minx, miny, minz, maxx + 1, maxy + 1, maxz + 1, worldoffsetx, worldoffsety, worldoffsetz);
-                    } else {
-                        redBoxDrawer.drawRedBox(matrixStack, vertexConsumer, pos, x, y, z, x + 1, y + 1, z + 1, worldoffsetx, worldoffsety, worldoffsetz);
+                    if (!haspos1) {
+                        block = pos;
+                        bitx = x;
+                        bity = y;
+                        bitz = z;
                     }
+
+                    int blockXOffset = pos.getX() - block.getX();
+                    int blockYOffset = pos.getY() - block.getY();
+                    int blockZOffset = pos.getZ() - block.getZ();
+
+                    int minx = Math.min(bitx, blockXOffset * 16 + x);
+                    int miny = Math.min(bity, blockYOffset * 16 + y);
+                    int minz = Math.min(bitz, blockZOffset * 16 + z);
+
+                    int maxx = Math.max(bitx, blockXOffset * 16 + x);
+                    int maxy = Math.max(bity, blockYOffset * 16 + y);
+                    int maxz = Math.max(bitz, blockZOffset * 16 + z);
+
+                    // Adjust to full blocks if full blocks only is enabled
+                    if (CommandConfig.fullBlocksOnly) {
+                        minx = Math.floorDiv(minx, 16) * 16;
+                        miny = Math.floorDiv(miny, 16) * 16;
+                        minz = Math.floorDiv(minz, 16) * 16;
+                        maxx = Math.floorDiv(maxx, 16) * 16 + 15;
+                        maxy = Math.floorDiv(maxy, 16) * 16 + 15;
+                        maxz = Math.floorDiv(maxz, 16) * 16 + 15;
+                    }
+
+                    // Only draw if volume is smaller than maximum
+                    if ((maxx - minx + 1) * (maxy - miny + 1) * (maxz - minz + 1) / 4096 <= CommandConfig.maxVolumeManual)
+                        redBoxDrawer.drawRedBox(matrixStack, vertexConsumer, block, minx, miny, minz, maxx + 1, maxy + 1, maxz + 1, worldoffsetx, worldoffsety, worldoffsetz);
                 }
             }
         });
@@ -211,56 +226,65 @@ public class BitItem extends Item implements ServerPlayNetworking.PlayChannelHan
             }
 
             if (BitUtils.canPlace(context.getPlayer(), pos, x, y, z)) {
-                if (context.getPlayer().isSneaking()) {
-                    if (haspos1) {
-                        PacketByteBuf passedData = new PacketByteBuf(Unpooled.buffer());
 
-                        int blockXOffset = pos.getX() - block.getX();
-                        int blockYOffset = pos.getY() - block.getY();
-                        int blockZOffset = pos.getZ() - block.getZ();
-
-                        int minx = Math.min(bitx, blockXOffset * 16 + x);
-                        int miny = Math.min(bity, blockYOffset * 16 + y);
-                        int minz = Math.min(bitz, blockZOffset * 16 + z);
-
-                        int maxx = Math.max(bitx, blockXOffset * 16 + x);
-                        int maxy = Math.max(bity, blockYOffset * 16 + y);
-                        int maxz = Math.max(bitz, blockZOffset * 16 + z);
-
-                        passedData.writeBlockPos(block);
-                        passedData.writeInt(minx);
-                        passedData.writeInt(miny);
-                        passedData.writeInt(minz);
-                        passedData.writeInt(maxx);
-                        passedData.writeInt(maxy);
-                        passedData.writeInt(maxz);
-                        passedData.writeBoolean(context.getHand().equals(Hand.MAIN_HAND));
-                        ClientPlayNetworking.send(PACKET_ID, passedData);
-                        haspos1 = false;
-                        return ActionResult.SUCCESS;
-                    } else {
-                        this.block = pos;
-                        bitx = x;
-                        bity = y;
-                        bitz = z;
+                if (!haspos1) {
+                    block = pos;
+                    bitx = x;
+                    bity = y;
+                    bitz = z;
+                    // Player is sneaking (going to select a second point)
+                    if (context.getPlayer().isSneaking()) {
                         haspos1 = true;
+                        return ActionResult.SUCCESS;
                     }
-                } else {
-                    PacketByteBuf passedData = new PacketByteBuf(Unpooled.buffer());
-                    passedData.writeBlockPos(pos);
-                    passedData.writeInt(x);
-                    passedData.writeInt(y);
-                    passedData.writeInt(z);
-                    passedData.writeInt(x);
-                    passedData.writeInt(y);
-                    passedData.writeInt(z);
-                    passedData.writeBoolean(context.getHand().equals(Hand.MAIN_HAND));
-                    ClientPlayNetworking.send(PACKET_ID, passedData);
-                    return ActionResult.SUCCESS;
                 }
-                
+
+                int blockXOffset = pos.getX() - block.getX();
+                int blockYOffset = pos.getY() - block.getY();
+                int blockZOffset = pos.getZ() - block.getZ();
+
+                int minx = Math.min(bitx, blockXOffset * 16 + x);
+                int miny = Math.min(bity, blockYOffset * 16 + y);
+                int minz = Math.min(bitz, blockZOffset * 16 + z);
+
+                int maxx = Math.max(bitx, blockXOffset * 16 + x);
+                int maxy = Math.max(bity, blockYOffset * 16 + y);
+                int maxz = Math.max(bitz, blockZOffset * 16 + z);
+
+                // Adjust origin to player position if unlocked mode is enabled
+                if (CommandConfig.unlockedMode) {
+                    minx += 16 * (block.getX() - client.player.getBlockX());
+                    miny += 16 * (block.getY() - client.player.getBlockY());
+                    minz += 16 * (block.getZ() - client.player.getBlockZ());
+                    maxx += 16 * (block.getX() - client.player.getBlockX());
+                    maxy += 16 * (block.getY() - client.player.getBlockY());
+                    maxz += 16 * (block.getZ() - client.player.getBlockZ());
+                    block = client.player.getBlockPos();
+                }
+
+                // Adjust to full blocks if full blocks only is enabled
+                if (CommandConfig.fullBlocksOnly) {
+                    minx = Math.floorDiv(minx, 16) * 16;
+                    miny = Math.floorDiv(miny, 16) * 16;
+                    minz = Math.floorDiv(minz, 16) * 16;
+                    maxx = Math.floorDiv(maxx, 16) * 16 + 15;
+                    maxy = Math.floorDiv(maxy, 16) * 16 + 15;
+                    maxz = Math.floorDiv(maxz, 16) * 16 + 15;
+                }
+
+                // Only fill if volume is smaller than maximum
+                if ((maxx - minx + 1) * (maxy - miny + 1) * (maxz - minz + 1) / 4096 <= CommandConfig.maxVolumeManual)
+                    FillHelper.fillBits(block, minx, miny, minz, maxx, maxy, maxz, context.getHand().equals(Hand.MAIN_HAND), false);
+
+                haspos1 = false;
+                return ActionResult.SUCCESS;
+            } else {
+                this.block = pos;
+                bitx = x;
+                bity = y;
+                bitz = z;
+                haspos1 = true;
             }
-            
         }
         return ActionResult.PASS;
     }

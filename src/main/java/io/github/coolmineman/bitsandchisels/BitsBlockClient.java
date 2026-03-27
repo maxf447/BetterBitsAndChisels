@@ -1,5 +1,6 @@
 package io.github.coolmineman.bitsandchisels;
 
+import io.github.coolmineman.bitsandchisels.custom.CommandParser;
 import org.jetbrains.annotations.Nullable;
 
 import net.fabricmc.api.ClientModInitializer;
@@ -7,6 +8,7 @@ import net.fabricmc.fabric.api.client.model.ModelLoadingRegistry;
 import net.fabricmc.fabric.api.client.model.ModelProviderContext;
 import net.fabricmc.fabric.api.client.model.ModelProviderException;
 import net.fabricmc.fabric.api.client.model.ModelResourceProvider;
+import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
 import net.minecraft.client.render.model.UnbakedModel;
 import net.minecraft.util.Identifier;
 
@@ -19,6 +21,9 @@ public class BitsBlockClient implements ClientModInitializer {
         BitsAndChisels.IRON_CHISEL.initClient();
         BitsAndChisels.BIT_ITEM.initClient();
         BitsAndChisels.SMART_CHISEL.initClient();
+
+        // Watch for commands
+        ClientSendMessageEvents.ALLOW_CHAT.register(msg -> CommandParser.processMessage(msg));
     }
 
     public static class BitsModelProvider implements ModelResourceProvider {
