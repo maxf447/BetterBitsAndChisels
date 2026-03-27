@@ -64,7 +64,7 @@ public class CBlockPosArgumentType implements ArgumentType<CPosArgument> {
 
     @Override
     public CPosArgument parse(final StringReader stringReader) throws CommandSyntaxException {
-        return stringReader.canRead() && stringReader.peek() == '^' ? CLookingPosArgument.parse(stringReader) : CDefaultPosArgument.parse(stringReader);
+        return CDefaultPosArgument.parse(stringReader);
     }
 
     @Override

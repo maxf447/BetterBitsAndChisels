@@ -19,7 +19,8 @@
       "io.github.coolmineman.bitsandchisels.BitsAndChisels"
     ],
     "client": [
-      "io.github.coolmineman.bitsandchisels.BitsBlockClient"
+      "io.github.coolmineman.bitsandchisels.BitsBlockClient",
+      "io.github.coolmineman.bitsandchisels.custom.CommandProcessor"
     ],
     "rei_client": [
       "io.github.coolmineman.bitsandchisels.tellreistopbad.TellReiStopBad"

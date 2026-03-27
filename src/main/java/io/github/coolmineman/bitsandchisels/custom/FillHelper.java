@@ -17,7 +17,9 @@ public class FillHelper {
 
     // Fills an area specified by corners in blocks (x1, y1, z1) and (x2, y2, z2)
     // TODO: Maximum chunks
-    public static void fillBlocks(BlockPos pos, int x1, int y1, int z1, int x2, int y2, int z2, boolean mainhand, boolean breakPacket) {
+    public static void fillBlocks(int x1, int y1, int z1, int x2, int y2, int z2, boolean mainhand, boolean breakPacket) {
+
+        BlockPos pos = MinecraftClient.getInstance().player.getBlockPos();
 
         // Find min/max corners relative to player position, in relative bits
         int minX = 16 * (Math.min(x1, x2) - pos.getX());
@@ -121,7 +123,7 @@ public class FillHelper {
             // Split along y-axis into minimum number of regions to pass volume check
             int regionCount = (int) Math.ceil(volume / CommandConfig.maxChunkSize);
 
-            int regionSize = Math.max(1, (y2 - y1) / regionCount);
+            int regionSize = Math.max(1, (y2 - y1 + 1) / regionCount);
             int regionY = y1;
 
             // Add to regions list

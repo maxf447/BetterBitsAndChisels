@@ -160,7 +160,7 @@ public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayCh
             lastBreakTick = getTime();
             if (BitUtils.exists(BitUtils.getBit(world, pos, x, y, z))) {
                 // Only apply distance restriction if unlocked mode is disabled
-                if (!haspos1 || (pos.getSquaredDistance(block) > 9 && !CommandConfig.unlockedMode)) {
+                if (player.isSneaking() && (!haspos1 || (pos.getSquaredDistance(block) > 9 && !CommandConfig.unlockedMode))) {
                     block = pos;
                     bitx = x;
                     bity = y;
