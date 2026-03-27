@@ -12,21 +12,23 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ToolItem;
-import net.minecraft.item.ToolMaterials;
+import net.minecraft.item.*;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.MutableText;
+import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
+
+import java.text.DecimalFormat;
 
 public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayChannelHandler, AirSwingItem {
     public static final Identifier PACKET_ID = new Identifier("bitsandchisels", "smart_chisel_packet");
@@ -101,8 +103,25 @@ public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayCh
                     }
 
                     // Only draw if volume is smaller than maximum
-                    if ((maxx - minx + 1) * (maxy - miny + 1) * (maxz - minz + 1) / 4096 <= CommandConfig.maxVolumeManual)
+                    double volume = (double) (maxx - minx + 1) * (maxy - miny + 1) * (maxz - minz + 1) / 4096;
+                    if (volume <= CommandConfig.maxVolumeManual)
                         redBoxDrawer.drawRedBox(matrixStack, vertexConsumer, block, minx, miny, minz, maxx + 1, maxy + 1, maxz + 1, worldoffsetx, worldoffsety, worldoffsetz);
+
+                    // Display HUD text
+                    if (haspos1) {
+                        DecimalFormat df = new DecimalFormat("0");
+                        df.setMaximumFractionDigits(4);
+                        MutableText text = Text.literal(String.format(
+                                "Area: %sx%sx%s blocks, Volume: %s block%s, Fills required: %s",
+                                df.format((double) (maxx - minx + 1) / 16),
+                                df.format((double) (maxy - miny + 1) / 16),
+                                df.format((double) (maxz - minz + 1) / 16),
+                                df.format(volume),
+                                volume == 1 ? "" : "s",
+                                df.format(69)
+                        ));
+                        client.inGameHud.setOverlayMessage(text.formatted(volume <= CommandConfig.maxVolumeManual ? Formatting.GREEN : Formatting.RED), false);
+                    }
                 }
             }
         });
@@ -184,7 +203,8 @@ public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayCh
                     }
 
                     // Only fill if volume is smaller than maximum
-                    if ((maxx - minx + 1) * (maxy - miny + 1) * (maxz - minz + 1) / 4096 <= CommandConfig.maxVolumeManual)
+                    double volume = (double) (maxx - minx + 1) * (maxy - miny + 1) * (maxz - minz + 1) / 4096;
+                    if (volume <= CommandConfig.maxVolumeManual)
                         FillHelper.fillBits(block, minx, miny, minz, maxx, maxy, maxz, true, true);
                     haspos1 = false;
                 }

@@ -4,6 +4,7 @@ import io.github.coolmineman.bitsandchisels.api.BitUtils;
 import io.github.coolmineman.bitsandchisels.api.client.RedBoxCallback;
 import io.github.coolmineman.bitsandchisels.custom.CommandConfig;
 import io.github.coolmineman.bitsandchisels.custom.FillHelper;
+import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.block.BlockState;
@@ -16,8 +17,10 @@ import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
@@ -25,6 +28,8 @@ import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
+
+import java.text.DecimalFormat;
 
 public class BitItem extends Item implements ServerPlayNetworking.PlayChannelHandler {
 
@@ -41,6 +46,11 @@ public class BitItem extends Item implements ServerPlayNetworking.PlayChannelHan
     public BitItem(Settings settings) {
         super(settings);
         ServerPlayNetworking.registerGlobalReceiver(PACKET_ID, this);
+        // Reset swing on left click
+        AttackBlockCallback.EVENT.register((player, world, hand, pos, direction) -> {
+            haspos1 = false;
+            return ActionResult.SUCCESS;
+        });
     }
 
     @Override
@@ -180,8 +190,25 @@ public class BitItem extends Item implements ServerPlayNetworking.PlayChannelHan
                     }
 
                     // Only draw if volume is smaller than maximum
-                    if ((maxx - minx + 1) * (maxy - miny + 1) * (maxz - minz + 1) / 4096 <= CommandConfig.maxVolumeManual)
+                    double volume = (double) (maxx - minx + 1) * (maxy - miny + 1) * (maxz - minz + 1) / 4096;
+                    if (volume <= CommandConfig.maxVolumeManual)
                         redBoxDrawer.drawRedBox(matrixStack, vertexConsumer, block, minx, miny, minz, maxx + 1, maxy + 1, maxz + 1, worldoffsetx, worldoffsety, worldoffsetz);
+
+                    // Display HUD text
+                    if (haspos1) {
+                        DecimalFormat df = new DecimalFormat("0");
+                        df.setMaximumFractionDigits(4);
+                        MutableText text = Text.literal(String.format(
+                                "Area: %sx%sx%s blocks, Volume: %s block%s, Fills required: %s",
+                                df.format((double) (maxx - minx + 1) / 16),
+                                df.format((double) (maxy - miny + 1) / 16),
+                                df.format((double) (maxz - minz + 1) / 16),
+                                df.format(volume),
+                                volume == 1 ? "" : "s",
+                                df.format(69)
+                        ));
+                        client.inGameHud.setOverlayMessage(text.formatted(volume <= CommandConfig.maxVolumeManual ? Formatting.GREEN : Formatting.RED), false);
+                    }
                 }
             }
         });
@@ -273,7 +300,8 @@ public class BitItem extends Item implements ServerPlayNetworking.PlayChannelHan
                 }
 
                 // Only fill if volume is smaller than maximum
-                if ((maxx - minx + 1) * (maxy - miny + 1) * (maxz - minz + 1) / 4096 <= CommandConfig.maxVolumeManual)
+                double volume = (double) (maxx - minx + 1) * (maxy - miny + 1) * (maxz - minz + 1) / 4096;
+                if (volume <= CommandConfig.maxVolumeManual)
                     FillHelper.fillBits(block, minx, miny, minz, maxx, maxy, maxz, context.getHand().equals(Hand.MAIN_HAND), false);
 
                 haspos1 = false;

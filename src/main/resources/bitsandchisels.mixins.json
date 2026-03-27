@@ -12,7 +12,6 @@
     "BakedQuadAccessor",
     "BlockStateMixin",
     "MinecraftClientMixin",
-    "ClientPlayerEntityMixin",
     "AddedReachMixin"
   ],
   "injectors": {
