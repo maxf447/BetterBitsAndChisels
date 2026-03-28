@@ -86,7 +86,7 @@ public class FillHelper {
         // Split into regions of small enough size to fill directly
         ArrayList<int[]> regions = splitRegion(x1, y1, z1, x2, y2, z2);
         // Reverse array if we're breaking to break top down
-        if (!breakPacket) Collections.reverse(regions);
+        if (breakPacket) Collections.reverse(regions);
         // Add regions to processing queue
         for (int[] r : regions) {
             double volume = (double) (r[3] - r[0] + 1) * (r[4] - r[1] + 1) * (r[5] - r[2] + 1) / 4096;
