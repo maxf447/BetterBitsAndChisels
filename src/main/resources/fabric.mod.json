@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "id": "bitsandchisels",
   "version": "2.7.3",
-  "name": "BitsAndChisels",
-  "description": "Turn Blocks Into Small Bits With Chisels; Build All The Things",
+  "name": "Advanced BitsAndChisels",
+  "description": "Modified version of Bits And Chisels that adds many powerful client-side features.",
   "authors": [
     "cool_mineman"
   ],

@@ -15,7 +15,6 @@ import java.util.Collections;
 public class FillHelper {
 
     // Fills an area specified by corners in blocks (x1, y1, z1) and (x2, y2, z2)
-    // TODO: Maximum chunks
     public static void fillBlocks(int x1, int y1, int z1, int x2, int y2, int z2, boolean mainhand, boolean breakPacket) {
 
         BlockPos pos = MinecraftClient.getInstance().player.getBlockPos();
@@ -40,7 +39,6 @@ public class FillHelper {
         // Only one region; process synchronously
         if (regions.size() == 1) {
             int[] r = regions.get(0);
-            System.out.printf("[sync] Sending region (%s, %s, %s) -> (%s, %s, %s)...\n", r[0], r[1], r[2], r[3], r[4], r[5]);
             sendPacket(pos, r[0], r[1], r[2], r[3], r[4], r[5], mainhand, breakPacket);
         }
 
@@ -52,8 +50,6 @@ public class FillHelper {
             ClientPlayerEntity player = MinecraftClient.getInstance().player;
             new Thread(() -> {
                 for (int[] r : regions) {
-                    System.out.printf("[async thread] Sending region (%s, %s, %s) -> (%s, %s, %s)...\n", r[0], r[1], r[2], r[3], r[4], r[5]);
-
                     // Recenter to player if unlocked mode is enabled (player may have moved)
                     if (Config.unlockedMode) {
                         BlockPos playerPos = player.getBlockPos();
@@ -93,24 +89,19 @@ public class FillHelper {
 
     // Takes a single volume (in bits) and splits it into an array of smaller volumes that pass serverside checks and volume check
     public static ArrayList<int[]> splitRegion(int x1, int y1, int z1, int x2, int y2, int z2) {
-        System.out.printf("Splitting region (%s, %s, %s) -> (%s, %s, %s)...\n", x1, y1, z1, x2, y2, z2);
         ArrayList<int[]> regions = new ArrayList<>();
         // Volume fails server side sum of squares check
         if ((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1) > 1000000) {
-            System.out.printf("Failed server side check! Splitting along longest axis... ");
             // Split in half along longest access and recurse
             if (x2 - x1 > y2 - y1 && x2 - x1 > z2 - z1) {
-                System.out.println("x axis");
                 regions.addAll(splitRegion(x1, y1, z1, x1 + (x2 - x1) / 2, y2, z2));
                 regions.addAll(splitRegion(x1 + (x2 - x1) / 2 + 1, y1, z1, x2, y2, z2));
             }
             else if (z2 - z1 > y2 - y1 && z2 - z1 > x2 - x1) {
-                System.out.println("y axis");
                 regions.addAll(splitRegion(x1, y1, z1, x2, y2, z1 + (z2 - z1) / 2));
                 regions.addAll(splitRegion(x1, y1, z1 + (z2 - z1) / 2 + 1, x2, y2, z2));
             }
             else {
-                System.out.println("z axis");
                 regions.addAll(splitRegion(x1, y1, z1, x2, y1 + (y2 - y1) / 2, z2));
                 regions.addAll(splitRegion(x1, y1 + (y2 - y1) / 2 + 1, z1, x2, y2, z2));
             }
@@ -126,15 +117,12 @@ public class FillHelper {
             int regionY = y1;
 
             // Add to regions list
-            System.out.printf("Failed volume check! Splitting into %s regions of size %s...\n", regionCount, regionSize);
             while (regionY <= y2) {
-                System.out.printf("Generated region: (%s, %s, %s) -> (%s, %s, %s)\n", x1, regionY, z1, x2, Math.min(y2, regionY + regionSize - 1), z2);
                 regions.add(new int[]{x1, regionY, z1, x2, Math.min(y2, regionY + regionSize - 1), z2});
                 regionY += regionSize;
             }
         }
         else {
-            System.out.println("Region is small enough");
             regions.add(new int[]{x1, y1, z1, x2, y2, z2});
         }
 
