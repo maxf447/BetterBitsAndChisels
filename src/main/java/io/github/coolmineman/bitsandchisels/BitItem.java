@@ -196,7 +196,7 @@ public class BitItem extends Item implements ServerPlayNetworking.PlayChannelHan
 
                     // Only draw if volume is smaller than maximum and pos is valid
                     double volume = (double) (maxx - minx + 1) * (maxy - miny + 1) * (maxz - minz + 1) / 4096;
-                    if (volume <= Config.maxVolumeManual && client.player.getBlockPos().getSquaredDistance(block) < 81)
+                    if (volume <= Config.maxVolumeManual && (Config.unlockedMode || client.player.getBlockPos().getSquaredDistance(block) < 81))
                         redBoxDrawer.drawRedBox(matrixStack, vertexConsumer, block, minx, miny, minz, maxx + 1, maxy + 1, maxz + 1, worldoffsetx, worldoffsety, worldoffsetz);
 
                     // Display HUD text
