@@ -1,8 +1,9 @@
 package io.github.coolmineman.bitsandchisels.custom;
 
+import io.github.coolmineman.bitsandchisels.BitsAndChisels;
 import io.netty.buffer.Unpooled;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.item.Item;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.Identifier;
@@ -10,15 +11,17 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.LinkedBlockingDeque;
 
 
 public class FillHelper {
 
     // Queue of fill operations to send
-    public static Queue<int[]> fillQueue = new LinkedList<>();
-    boolean fillThreadActive = false;
+    public static final BlockingDeque<int[]> fillStack = new LinkedBlockingDeque<>();
+    public static int estDelay = 0;
+    public static boolean holdingCorrectItem = true;
+    private static boolean fillThreadActive = false;
 
     // Fills a structure specified by a 3D array of values extending along the positive axes from the origin
     public static void fillStructure(BlockPos pos, int x1, int y1, int z1, boolean[][][] arr, boolean mainhand, boolean breakPacket) {
@@ -49,7 +52,7 @@ public class FillHelper {
     }
 
     // Check whether entire subarray (x1, y1, z1) -> (x2, y2, z2) is filled, and empty it if so
-    public static boolean emptyIfFilled(boolean[][][] arr, int x1, int y1, int z1, int x2, int y2, int z2) {
+    private static boolean emptyIfFilled(boolean[][][] arr, int x1, int y1, int z1, int x2, int y2, int z2) {
         for (int x = x1; x <= Math.min(arr.length - 1, x2); x++)
             for (int y = y1; y <= Math.min(arr[0].length - 1, y2); y++)
                 for (int z = z1; z <= Math.min(arr[0][0].length - 1, z2); z++)
@@ -82,22 +85,52 @@ public class FillHelper {
     public static void fillBits(BlockPos pos, int x1, int y1, int z1, int x2, int y2, int z2, boolean mainhand, boolean breakPacket, boolean recenter) {
         // Split into regions of small enough size to fill directly
         ArrayList<int[]> regions = splitRegion(x1, y1, z1, x2, y2, z2);
-
         // Reverse array if we're breaking to break top down
-        if (breakPacket) Collections.reverse(regions);
+        if (!breakPacket) Collections.reverse(regions);
+        // Add regions to processing queue
+        for (int[] r : regions) {
+            double volume = (double) (r[3] - r[0] + 1) * (r[4] - r[1] + 1) * (r[5] - r[2] + 1) / 4096;
+            int delay = (int) ((volume / Config.maxPacketVolume) * Config.maxPacketSendInterval);
+            estDelay += delay;
 
-        // Add regions to processing queue, and start processing thread if not already running
-        new Thread(() -> {
-            for (int[] r : regions) {
-                sendPacket(pos, r[0], r[1], r[2], r[3], r[4], r[5], mainhand, breakPacket, recenter);
-                try { Thread.sleep(Config.packetSendInterval); }
-                catch (InterruptedException ignored) {}
-            }
-        }).start();
+            int[] queueItem = new int[]{pos.getX(), pos.getY(), pos.getZ(),
+                r[0], r[1], r[2], r[3], r[4], r[5],
+                mainhand ? 1 : 0, breakPacket ? 1 : 0, recenter ? 1 : 0, delay};
+            fillStack.addLast(queueItem);
+        }
+        // Start processing thread if not already running
+        if (!fillThreadActive) {
+            fillThreadActive = true;
+            new Thread(() -> {
+                while (true) {
+                    try {
+                        int[] r = fillStack.takeLast();
+                        // Wait until user holding correct item
+                        while (!holdingCorrect(r[10] == 1)) {
+                            holdingCorrectItem = false;
+                            Thread.sleep(50);
+                        }
+                        holdingCorrectItem = true;
+                        // Send packet
+                        sendPacket(new BlockPos(r[0], r[1], r[2]), r[3], r[4], r[5], r[6], r[7], r[8], r[9] == 1, r[10] == 1, r[11] == 1);
+                        // Wait depending on packet size
+                        Thread.sleep(r[12]);
+                        estDelay -= r[12];
+                    }
+                    catch (InterruptedException ignored) {}
+                }
+            }).start();
+        }
+    }
+
+    public static boolean holdingCorrect(boolean breakPacket) {
+        Item item = MinecraftClient.getInstance().player.getMainHandStack().getItem();
+        return (breakPacket && item == BitsAndChisels.SMART_CHISEL) ||
+                (!breakPacket && item == BitsAndChisels.BIT_ITEM);
     }
 
     // Sends a single packet to break or fill an area of bits from (x1, y1, z1) to (x2, y2, z2) ([xyz]1 must be < [xyz]2 for each axis)
-    public static void sendPacket(BlockPos pos, int x1, int y1, int z1, int x2, int y2, int z2, boolean mainhand, boolean breakPacket, boolean recenter) {
+    private static void sendPacket(BlockPos pos, int x1, int y1, int z1, int x2, int y2, int z2, boolean mainhand, boolean breakPacket, boolean recenter) {
         // Recenter to player if unlocked mode is enabled
         if (recenter) {
             BlockPos playerPos = MinecraftClient.getInstance().player.getBlockPos();

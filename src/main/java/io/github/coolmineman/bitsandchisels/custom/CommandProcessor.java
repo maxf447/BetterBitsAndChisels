@@ -74,7 +74,7 @@ public class CommandProcessor implements ClientModInitializer {
 
     private int blockCommand(CommandContext<FabricClientCommandSource> context, boolean breakPacket) {
         BlockPos pos = CBlockPosArgumentType.getCBlockPos(context, "pos");
-        if (!holdingCorrect(breakPacket)) {
+        if (!FillHelper.holdingCorrect(breakPacket)) {
             context.getSource().sendFeedback(Text.literal(
                     String.format("Not holding %s!", breakPacket ? "Smart Chisel" : "bits"))
                             .formatted(Formatting.RED));
@@ -97,7 +97,7 @@ public class CommandProcessor implements ClientModInitializer {
                     .formatted(Formatting.RED));
             return -1;
         }
-        if (!holdingCorrect(breakPacket)) {
+        if (!FillHelper.holdingCorrect(breakPacket)) {
             context.getSource().sendFeedback(Text.literal(
                             String.format("Not holding %s!", breakPacket ? "Smart Chisel" : "bits"))
                     .formatted(Formatting.RED));
@@ -122,7 +122,7 @@ public class CommandProcessor implements ClientModInitializer {
                     .formatted(Formatting.RED));
             return -1;
         }
-        if (!holdingCorrect(breakPacket)) {
+        if (!FillHelper.holdingCorrect(breakPacket)) {
             context.getSource().sendFeedback(Text.literal(
                             String.format("Not holding %s!", breakPacket ? "Smart Chisel" : "bits"))
                     .formatted(Formatting.RED));
@@ -137,7 +137,7 @@ public class CommandProcessor implements ClientModInitializer {
     }
 
     private int pillarCommand(CommandContext<FabricClientCommandSource> context, boolean breakPacket) {
-        if (!holdingCorrect(breakPacket)) {
+        if (!FillHelper.holdingCorrect(breakPacket)) {
             context.getSource().sendFeedback(Text.literal(
                             String.format("Not holding %s!", breakPacket ? "Smart Chisel" : "bits"))
                     .formatted(Formatting.RED));
@@ -176,11 +176,5 @@ public class CommandProcessor implements ClientModInitializer {
         return (Math.abs(pos2.getX() - pos1.getX()) + 1) *
             (Math.abs(pos2.getY() - pos1.getY()) + 1) *
             (Math.abs(pos2.getZ() - pos1.getZ()) + 1);
-    }
-
-    private boolean holdingCorrect(boolean breakPacket) {
-        Item item = MinecraftClient.getInstance().player.getMainHandStack().getItem();
-        return (breakPacket && item == BitsAndChisels.SMART_CHISEL) ||
-            (!breakPacket && item == BitsAndChisels.BIT_ITEM);
     }
 }

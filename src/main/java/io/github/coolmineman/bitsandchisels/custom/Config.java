@@ -8,10 +8,11 @@ public class Config {
     public static boolean fullBlocksOnly = false;
     public static boolean unlockedMode = false;
     public static double addedReach = 0;
-    public static int maxVolumeManual = 64;
-    public static int maxVolumeCommands = 512;
+    public static int maxVolumeManual = 512;
+    public static int maxVolumeCommands = 32768;
     public static int maxPacketVolume = 256;
-    public static int packetSendInterval = 1000;
+    public static int maxPacketSendInterval = 1000;
+    public static int minPacketSendInterval = 25;
 
     public static void loadConfig() {
         try (BufferedReader reader = new BufferedReader(new FileReader(FabricLoader.getInstance().getConfigDir().toString() + "/advanced_bits_and_chisels.conf"))) {
@@ -24,7 +25,8 @@ public class Config {
                         case "maxVolumeManual:" -> maxVolumeManual = Integer.parseInt(data[1]);
                         case "maxVolumeCommands:" -> maxVolumeCommands = Integer.parseInt(data[1]);
                         case "maxPacketVolume:" -> maxPacketVolume = Integer.parseInt(data[1]);
-                        case "packetSendInterval:" -> packetSendInterval = Integer.parseInt(data[1]);
+                        case "maxPacketSendInterval:" -> maxPacketSendInterval = Integer.parseInt(data[1]);
+                        case "minPacketSendInterval:" -> minPacketSendInterval = Integer.parseInt(data[1]);
                     }
                 }
             }
@@ -44,15 +46,18 @@ public class Config {
                         maxVolumeCommands: %s
                         # Maximum volume, in blocks, of a single packet sent to the server (high values will cause server lag)
                         maxPacketVolume: %s
-                        # Interval between sending packets, in milliseconds (low values will cause server lag)
-                        packetSendInterval: %s
+                        # Interval between sending max-sized packets in milliseconds (low values will cause server lag)
+                        maxPacketSendInterval: %s
+                        # Minimum interval between sending min-sized packets in milliseconds
+                        minPacketSendInterval: %s
                         """,
                         unlockedMode,
                         addedReach,
                         maxVolumeManual,
                         maxVolumeCommands,
                         maxPacketVolume,
-                        packetSendInterval);
+                        maxPacketSendInterval,
+                        minPacketSendInterval);
             }
             catch (IOException ignored) {}
         }

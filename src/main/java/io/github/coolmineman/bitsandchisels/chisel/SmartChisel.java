@@ -5,6 +5,7 @@ import io.github.coolmineman.bitsandchisels.api.BitUtils;
 import io.github.coolmineman.bitsandchisels.api.client.RedBoxCallback;
 import io.github.coolmineman.bitsandchisels.custom.Config;
 import io.github.coolmineman.bitsandchisels.custom.FillHelper;
+import io.github.coolmineman.bitsandchisels.custom.HeadsUpDisplay;
 import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -106,20 +107,7 @@ public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayCh
                         redBoxDrawer.drawRedBox(matrixStack, vertexConsumer, block, minx, miny, minz, maxx + 1, maxy + 1, maxz + 1, worldoffsetx, worldoffsety, worldoffsetz);
 
                     // Display HUD text
-                    if (haspos1) {
-                        DecimalFormat df = new DecimalFormat("0");
-                        df.setMaximumFractionDigits(4);
-                        MutableText text = Text.literal(String.format(
-                                "Area: %sx%sx%s blocks, Volume: %s block%s, Fills required: %s",
-                                df.format((double) (maxx - minx + 1) / 16),
-                                df.format((double) (maxy - miny + 1) / 16),
-                                df.format((double) (maxz - minz + 1) / 16),
-                                df.format(volume),
-                                volume == 1 ? "" : "s",
-                                df.format(FillHelper.splitRegion(minx, miny, minz, maxx, maxy, maxz).size())
-                        ));
-                        client.inGameHud.setOverlayMessage(text.formatted(volume <= Config.maxVolumeManual ? Formatting.GREEN : Formatting.RED), false);
-                    }
+                    HeadsUpDisplay.displayFullHUD(minx, miny, minz, maxx, maxy, maxz);
                 }
             }
         });
