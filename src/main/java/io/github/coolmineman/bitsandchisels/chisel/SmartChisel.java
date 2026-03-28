@@ -3,7 +3,7 @@ package io.github.coolmineman.bitsandchisels.chisel;
 import io.github.coolmineman.bitsandchisels.BitsAndChisels;
 import io.github.coolmineman.bitsandchisels.api.BitUtils;
 import io.github.coolmineman.bitsandchisels.api.client.RedBoxCallback;
-import io.github.coolmineman.bitsandchisels.custom.CommandConfig;
+import io.github.coolmineman.bitsandchisels.custom.Config;
 import io.github.coolmineman.bitsandchisels.custom.FillHelper;
 import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
@@ -19,7 +19,6 @@ import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
@@ -77,7 +76,7 @@ public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayCh
                     }
 
                     // Only apply distance restriction if unlocked mode is disabled
-                    if (pos.getSquaredDistance(block) > 9 && !CommandConfig.unlockedMode) return;
+                    if (pos.getSquaredDistance(block) > 9 && !Config.unlockedMode) return;
 
                     int blockXOffset = pos.getX() - block.getX();
                     int blockYOffset = pos.getY() - block.getY();
@@ -92,7 +91,7 @@ public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayCh
                     int maxz = Math.max(bitz, blockZOffset * 16 + z);
 
                     // Adjust to full blocks if full blocks only is enabled
-                    if (CommandConfig.fullBlocksOnly) {
+                    if (Config.fullBlocksOnly) {
                         minx = Math.floorDiv(minx, 16) * 16;
                         miny = Math.floorDiv(miny, 16) * 16;
                         minz = Math.floorDiv(minz, 16) * 16;
@@ -103,7 +102,7 @@ public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayCh
 
                     // Only draw if volume is smaller than maximum
                     double volume = (double) (maxx - minx + 1) * (maxy - miny + 1) * (maxz - minz + 1) / 4096;
-                    if (volume <= CommandConfig.maxVolumeManual)
+                    if (volume <= Config.maxVolumeManual)
                         redBoxDrawer.drawRedBox(matrixStack, vertexConsumer, block, minx, miny, minz, maxx + 1, maxy + 1, maxz + 1, worldoffsetx, worldoffsety, worldoffsetz);
 
                     // Display HUD text
@@ -119,7 +118,7 @@ public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayCh
                                 volume == 1 ? "" : "s",
                                 df.format(FillHelper.splitRegion(minx, miny, minz, maxx, maxy, maxz).size())
                         ));
-                        client.inGameHud.setOverlayMessage(text.formatted(volume <= CommandConfig.maxVolumeManual ? Formatting.GREEN : Formatting.RED), false);
+                        client.inGameHud.setOverlayMessage(text.formatted(volume <= Config.maxVolumeManual ? Formatting.GREEN : Formatting.RED), false);
                     }
                 }
             }
@@ -160,7 +159,7 @@ public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayCh
             lastBreakTick = getTime();
             if (BitUtils.exists(BitUtils.getBit(world, pos, x, y, z))) {
                 // Only apply distance restriction if unlocked mode is disabled
-                if (player.isSneaking() && (!haspos1 || (pos.getSquaredDistance(block) > 9 && !CommandConfig.unlockedMode))) {
+                if (player.isSneaking() && (!haspos1 || (pos.getSquaredDistance(block) > 9 && !Config.unlockedMode))) {
                     block = pos;
                     bitx = x;
                     bity = y;
@@ -181,7 +180,7 @@ public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayCh
                     int maxz = Math.max(bitz, blockZOffset * 16 + z);
 
                     // Adjust origin to player position if unlocked mode is enabled
-                    if (CommandConfig.unlockedMode) {
+                    if (Config.unlockedMode) {
                         minx += 16 * (block.getX() - player.getBlockX());
                         miny += 16 * (block.getY() - player.getBlockY());
                         minz += 16 * (block.getZ() - player.getBlockZ());
@@ -192,7 +191,7 @@ public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayCh
                     }
 
                     // Adjust to full blocks if full blocks only is enabled
-                    if (CommandConfig.fullBlocksOnly) {
+                    if (Config.fullBlocksOnly) {
                         minx = Math.floorDiv(minx, 16) * 16;
                         miny = Math.floorDiv(miny, 16) * 16;
                         minz = Math.floorDiv(minz, 16) * 16;
@@ -203,7 +202,7 @@ public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayCh
 
                     // Only fill if volume is smaller than maximum
                     double volume = (double) (maxx - minx + 1) * (maxy - miny + 1) * (maxz - minz + 1) / 4096;
-                    if (volume <= CommandConfig.maxVolumeManual)
+                    if (volume <= Config.maxVolumeManual)
                         FillHelper.fillBits(block, minx, miny, minz, maxx, maxy, maxz, true, true);
                     haspos1 = false;
                 }

@@ -10,7 +10,6 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 
 
 public class FillHelper {
@@ -56,7 +55,7 @@ public class FillHelper {
                     System.out.printf("[async thread] Sending region (%s, %s, %s) -> (%s, %s, %s)...\n", r[0], r[1], r[2], r[3], r[4], r[5]);
 
                     // Recenter to player if unlocked mode is enabled (player may have moved)
-                    if (CommandConfig.unlockedMode) {
+                    if (Config.unlockedMode) {
                         BlockPos playerPos = player.getBlockPos();
                         r[0] += 16 * (pos.getX() - playerPos.getX());
                         r[1] += 16 * (pos.getY() - playerPos.getY());
@@ -69,7 +68,7 @@ public class FillHelper {
                     // Otherwise don't recenter
                     else sendPacket(pos, r[0], r[1], r[2], r[3], r[4], r[5], mainhand, breakPacket);
                     try {
-                        Thread.sleep(CommandConfig.fillSendInterval);
+                        Thread.sleep(Config.packetSendInterval);
                     }
                     catch (InterruptedException ignored) {}
                 }
@@ -119,9 +118,9 @@ public class FillHelper {
 
         // Volume fails client side volume check
         double volume = (double) (x2 - x1 + 1) * (y2 - y1 + 1) * (z2 - z1 + 1) / 4096;
-        if (volume > CommandConfig.maxChunkSize) {
+        if (volume > Config.maxPacketVolume) {
             // Split along y-axis into minimum number of regions to pass volume check
-            int regionCount = (int) Math.ceil(volume / CommandConfig.maxChunkSize);
+            int regionCount = (int) Math.ceil(volume / Config.maxPacketVolume);
 
             int regionSize = Math.max(1, (y2 - y1 + 1) / regionCount);
             int regionY = y1;

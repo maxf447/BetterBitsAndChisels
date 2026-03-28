@@ -2,7 +2,7 @@ package io.github.coolmineman.bitsandchisels.mixin;
 
 
 import io.github.coolmineman.bitsandchisels.BitsAndChisels;
-import io.github.coolmineman.bitsandchisels.custom.CommandConfig;
+import io.github.coolmineman.bitsandchisels.custom.Config;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
@@ -25,7 +25,7 @@ public abstract class AddedReachMixin {
         if (mainHand.getItem() == BitsAndChisels.BIT_ITEM ||
             offHand.getItem() == BitsAndChisels.BIT_ITEM ||
             mainHand.getItem() == BitsAndChisels.SMART_CHISEL) {
-            cir.setReturnValue(cir.getReturnValue() + (float) CommandConfig.addedReach);
+            cir.setReturnValue(cir.getReturnValue() + (float) Config.addedReach);
         }
     }
 }

@@ -2,8 +2,7 @@ package io.github.coolmineman.bitsandchisels;
 
 import io.github.coolmineman.bitsandchisels.api.BitUtils;
 import io.github.coolmineman.bitsandchisels.api.client.RedBoxCallback;
-import io.github.coolmineman.bitsandchisels.chisel.SmartChisel;
-import io.github.coolmineman.bitsandchisels.custom.CommandConfig;
+import io.github.coolmineman.bitsandchisels.custom.Config;
 import io.github.coolmineman.bitsandchisels.custom.FillHelper;
 import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
@@ -186,7 +185,7 @@ public class BitItem extends Item implements ServerPlayNetworking.PlayChannelHan
                     int maxz = Math.max(bitz, blockZOffset * 16 + z);
 
                     // Adjust to full blocks if full blocks only is enabled
-                    if (CommandConfig.fullBlocksOnly) {
+                    if (Config.fullBlocksOnly) {
                         minx = Math.floorDiv(minx, 16) * 16;
                         miny = Math.floorDiv(miny, 16) * 16;
                         minz = Math.floorDiv(minz, 16) * 16;
@@ -197,7 +196,7 @@ public class BitItem extends Item implements ServerPlayNetworking.PlayChannelHan
 
                     // Only draw if volume is smaller than maximum and pos is valid
                     double volume = (double) (maxx - minx + 1) * (maxy - miny + 1) * (maxz - minz + 1) / 4096;
-                    if (volume <= CommandConfig.maxVolumeManual && client.player.getBlockPos().getSquaredDistance(block) < 81)
+                    if (volume <= Config.maxVolumeManual && client.player.getBlockPos().getSquaredDistance(block) < 81)
                         redBoxDrawer.drawRedBox(matrixStack, vertexConsumer, block, minx, miny, minz, maxx + 1, maxy + 1, maxz + 1, worldoffsetx, worldoffsety, worldoffsetz);
 
                     // Display HUD text
@@ -213,7 +212,7 @@ public class BitItem extends Item implements ServerPlayNetworking.PlayChannelHan
                                 volume == 1 ? "" : "s",
                                 df.format(FillHelper.splitRegion(minx, miny, minz, maxx, maxy, maxz).size())
                         ));
-                        client.inGameHud.setOverlayMessage(text.formatted(volume <= CommandConfig.maxVolumeManual ? Formatting.GREEN : Formatting.RED), false);
+                        client.inGameHud.setOverlayMessage(text.formatted(volume <= Config.maxVolumeManual ? Formatting.GREEN : Formatting.RED), false);
                     }
                 }
             }
@@ -285,7 +284,7 @@ public class BitItem extends Item implements ServerPlayNetworking.PlayChannelHan
                 int maxz = Math.max(bitz, blockZOffset * 16 + z);
 
                 // Adjust origin to player position if unlocked mode is enabled
-                if (CommandConfig.unlockedMode) {
+                if (Config.unlockedMode) {
                     minx += 16 * (block.getX() - client.player.getBlockX());
                     miny += 16 * (block.getY() - client.player.getBlockY());
                     minz += 16 * (block.getZ() - client.player.getBlockZ());
@@ -296,7 +295,7 @@ public class BitItem extends Item implements ServerPlayNetworking.PlayChannelHan
                 }
 
                 // Adjust to full blocks if full blocks only is enabled
-                if (CommandConfig.fullBlocksOnly) {
+                if (Config.fullBlocksOnly) {
                     minx = Math.floorDiv(minx, 16) * 16;
                     miny = Math.floorDiv(miny, 16) * 16;
                     minz = Math.floorDiv(minz, 16) * 16;
@@ -307,7 +306,7 @@ public class BitItem extends Item implements ServerPlayNetworking.PlayChannelHan
 
                 // Only fill if volume is smaller than maximum
                 double volume = (double) (maxx - minx + 1) * (maxy - miny + 1) * (maxz - minz + 1) / 4096;
-                if (volume <= CommandConfig.maxVolumeManual)
+                if (volume <= Config.maxVolumeManual)
                     FillHelper.fillBits(block, minx, miny, minz, maxx, maxy, maxz, context.getHand().equals(Hand.MAIN_HAND), false);
 
                 haspos1 = false;
