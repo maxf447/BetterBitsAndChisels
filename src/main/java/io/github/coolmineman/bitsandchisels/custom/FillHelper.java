@@ -90,7 +90,7 @@ public class FillHelper {
         // Add regions to processing queue
         for (int[] r : regions) {
             double volume = (double) (r[3] - r[0] + 1) * (r[4] - r[1] + 1) * (r[5] - r[2] + 1) / 4096;
-            int delay = (int) ((volume / Config.maxPacketVolume) * Config.maxPacketSendInterval);
+            int delay =  Math.max(Config.minPacketSendInterval, (int) ((volume / Config.maxPacketVolume) * Config.maxPacketSendInterval));
             estDelay += delay;
 
             int[] queueItem = new int[]{pos.getX(), pos.getY(), pos.getZ(),
