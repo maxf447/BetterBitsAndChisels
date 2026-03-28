@@ -10,12 +10,12 @@ import net.minecraft.util.math.BlockPos;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-// Global queue for operations that have yet to be performed
-public class OperationQueue {
+// Global queue for packets that have yet to be sent
+public class PacketQueue {
     private static final BlockingQueue<PendingPacket> packetQueue = new LinkedBlockingQueue<>();
     private static int totalQueueDelay = 0;
 
-    public static void queuePacket(PendingPacket packet) {
+    public static void enqueuePacket(PendingPacket packet) {
         packetQueue.add(packet);
         totalQueueDelay += packet.delay();
     }
