@@ -1,7 +1,6 @@
 package io.github.coolmineman.bitsandchisels.custom;
 
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
@@ -61,8 +60,8 @@ public class HeadsUpDisplay {
         Formatting numColor = FillHelper.holdingCorrectItem ? Formatting.GREEN : Formatting.RED;
         Formatting otherColor = FillHelper.holdingCorrectItem ? Formatting.YELLOW : Formatting.RED;
         Text msg = Text.empty()
-            .append(Text.literal(Integer.toString(FillHelper.fillStack.size())).formatted(numColor))
-            .append(Text.literal(" in stack, ").formatted(otherColor))
+            .append(Text.literal(Integer.toString(FillHelper.fillQueue.size())).formatted(numColor))
+            .append(Text.literal(" in queue, ").formatted(otherColor))
             .append(Text.literal(h2 > 0 ? String.format("%02d", h2) : "").formatted(numColor))
             .append(Text.literal(h2 > 0 ? ":" : "").formatted(otherColor))
             .append(Text.literal(String.format("%02d", m2)).formatted(numColor))

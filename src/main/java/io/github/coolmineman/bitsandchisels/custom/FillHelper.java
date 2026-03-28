@@ -11,14 +11,14 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 
 public class FillHelper {
 
     // Queue of fill operations to send
-    public static final BlockingDeque<int[]> fillStack = new LinkedBlockingDeque<>();
+    public static final BlockingQueue<int[]> fillQueue = new LinkedBlockingQueue<>();
     public static int estDelay = 0;
     public static boolean holdingCorrectItem = true;
     private static boolean fillThreadActive = false;
@@ -96,7 +96,7 @@ public class FillHelper {
             int[] queueItem = new int[]{pos.getX(), pos.getY(), pos.getZ(),
                 r[0], r[1], r[2], r[3], r[4], r[5],
                 mainhand ? 1 : 0, breakPacket ? 1 : 0, recenter ? 1 : 0, delay};
-            fillStack.addLast(queueItem);
+            fillQueue.add(queueItem);
         }
         // Start processing thread if not already running
         if (!fillThreadActive) {
@@ -104,7 +104,7 @@ public class FillHelper {
             new Thread(() -> {
                 while (true) {
                     try {
-                        int[] r = fillStack.takeLast();
+                        int[] r = fillQueue.take();
                         // Wait until user holding correct item
                         while (!holdingCorrect(r[10] == 1)) {
                             holdingCorrectItem = false;
