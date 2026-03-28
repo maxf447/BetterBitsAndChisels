@@ -49,12 +49,14 @@ public class CommandProcessor implements ClientModInitializer {
                 .then(literal("sphere")
                     .then(literal("set")
                         .then(argument("center", CBlockPosArgumentType.blockPos())
-                            .then(argument("radius", DoubleArgumentType.doubleArg(0, 1024))
-                                .executes(context -> sphereCommand(context, false)))))
+                            .then(argument("inner radius", DoubleArgumentType.doubleArg(0, 1024))
+                                .then(argument("outer radius", DoubleArgumentType.doubleArg(0, 1024))
+                                    .executes(context -> sphereCommand(context, false))))))
                     .then(literal("del")
-                        .then(argument("center", CBlockPosArgumentType.blockPos())
-                            .then(argument("radius", DoubleArgumentType.doubleArg(0, 1024))
-                                .executes(context -> sphereCommand(context, true)))))
+                            .then(argument("center", CBlockPosArgumentType.blockPos())
+                                .then(argument("inner radius", DoubleArgumentType.doubleArg(0, 1024))
+                                    .then(argument("outer radius", DoubleArgumentType.doubleArg(0, 1024))
+                                        .executes(context -> sphereCommand(context, true))))))
                 )
                 .then(literal("pillar")
                     .then(literal("set")
@@ -111,11 +113,12 @@ public class CommandProcessor implements ClientModInitializer {
 
     private int sphereCommand(CommandContext<FabricClientCommandSource> context, boolean breakPacket) {
         BlockPos pos = CBlockPosArgumentType.getCBlockPos(context, "center");
-        Double r = DoubleArgumentType.getDouble(context, "radius");
+        Double r0 = DoubleArgumentType.getDouble(context, "inner radius");
+        Double r1 = DoubleArgumentType.getDouble(context, "outer radius");
 
-        if ((double) 4 / 3 * Math.PI * r * r * r > Config.maxVolumeCommands) {
+        if ((double) 4 / 3 * Math.PI * r1 * r1 * r1 > Config.maxVolumeCommands) {
             context.getSource().sendFeedback(Text.literal(
-                String.format("Volume %s larger than maximum of %s!", 4 / 3 * Math.PI * r * r * r, Config.maxVolumeCommands))
+                String.format("Volume %s larger than maximum of %s!", 4 / 3 * Math.PI * r1 * r1 * r1, Config.maxVolumeCommands))
                     .formatted(Formatting.RED));
             return -1;
         }
@@ -127,8 +130,8 @@ public class CommandProcessor implements ClientModInitializer {
         }
         else {
             context.getSource().sendFeedback(Text.literal(
-                    String.format("%s sphere of radius %s at (%s, %s, %s)", breakPacket ? "Deleting" : "Setting", r, pos.getX(), pos.getY(), pos.getZ())));
-            FillHelper.fillSphere(pos, r, true, breakPacket);
+                    String.format("%s sphere with inner radius %s and outer radius %s at (%s, %s, %s)", breakPacket ? "Deleting" : "Setting", r0, r1, pos.getX(), pos.getY(), pos.getZ())));
+            FillHelper.fillSphere(pos, r0, r1, true, breakPacket);
             return 1;
         }
     }
