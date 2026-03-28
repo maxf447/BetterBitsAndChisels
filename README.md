@@ -7,6 +7,7 @@ This is a modified version of the Bits and Chisels mod, which adds advanced feat
 - Smart Chisel placement selection now resets upon right clicking a block.
 - Smart Chisels now destroy a single bit/block by default; sneaking and left clicking allows a selection to be created (similarly to bits).
 - Bits and Smart Chisels now show a HUD which shows the dimensions, volume, and estimated number of fills required to modify the current selection.
+- Bits and Smart Chisels can have unbreakable blocks as the corners of their selection.
 - Client-side limits on the size of the area selected with the bits and Smart Chisel can be unlocked in the config to allow arbitrarily large selections.
 - The origin position for bits and Smart Chisel packets is adjusted to allow actions at arbitrary distances.
 - Client-side commands to directly fill or delete a block or a region of blocks have been added (`/bc info` for information).

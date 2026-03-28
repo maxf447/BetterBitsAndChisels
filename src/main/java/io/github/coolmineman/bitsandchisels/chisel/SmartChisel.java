@@ -157,55 +157,53 @@ public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayCh
             int y = (int) Math.floor(((hit.getPos().getY() - pos.getY()) * 16) + (direction.getOffsetY() * -0.5d));
             int z = (int) Math.floor(((hit.getPos().getZ() - pos.getZ()) * 16) + (direction.getOffsetZ() * -0.5d));
             lastBreakTick = getTime();
-            if (BitUtils.exists(BitUtils.getBit(world, pos, x, y, z))) {
-                // Only apply distance restriction if unlocked mode is disabled
-                if (player.isSneaking() && (!haspos1 || (pos.getSquaredDistance(block) > 9 && !Config.unlockedMode))) {
-                    block = pos;
-                    bitx = x;
-                    bity = y;
-                    bitz = z;
-                    haspos1 = true;
-                } else {
+            // Only apply distance restriction if unlocked mode is disabled
+            if (player.isSneaking() && (!haspos1 || (pos.getSquaredDistance(block) > 9 && !Config.unlockedMode))) {
+                block = pos;
+                bitx = x;
+                bity = y;
+                bitz = z;
+                haspos1 = true;
+            } else {
 
-                    int blockXOffset = pos.getX() - block.getX();
-                    int blockYOffset = pos.getY() - block.getY();
-                    int blockZOffset = pos.getZ() - block.getZ();
+                int blockXOffset = pos.getX() - block.getX();
+                int blockYOffset = pos.getY() - block.getY();
+                int blockZOffset = pos.getZ() - block.getZ();
 
-                    int minx = Math.min(bitx, blockXOffset * 16 + x);
-                    int miny = Math.min(bity, blockYOffset * 16 + y);
-                    int minz = Math.min(bitz, blockZOffset * 16 + z);
+                int minx = Math.min(bitx, blockXOffset * 16 + x);
+                int miny = Math.min(bity, blockYOffset * 16 + y);
+                int minz = Math.min(bitz, blockZOffset * 16 + z);
 
-                    int maxx = Math.max(bitx, blockXOffset * 16 + x);
-                    int maxy = Math.max(bity, blockYOffset * 16 + y);
-                    int maxz = Math.max(bitz, blockZOffset * 16 + z);
+                int maxx = Math.max(bitx, blockXOffset * 16 + x);
+                int maxy = Math.max(bity, blockYOffset * 16 + y);
+                int maxz = Math.max(bitz, blockZOffset * 16 + z);
 
-                    // Adjust origin to player position if unlocked mode is enabled
-                    if (Config.unlockedMode) {
-                        minx += 16 * (block.getX() - player.getBlockX());
-                        miny += 16 * (block.getY() - player.getBlockY());
-                        minz += 16 * (block.getZ() - player.getBlockZ());
-                        maxx += 16 * (block.getX() - player.getBlockX());
-                        maxy += 16 * (block.getY() - player.getBlockY());
-                        maxz += 16 * (block.getZ() - player.getBlockZ());
-                        block = player.getBlockPos();
-                    }
-
-                    // Adjust to full blocks if full blocks only is enabled
-                    if (Config.fullBlocksOnly) {
-                        minx = Math.floorDiv(minx, 16) * 16;
-                        miny = Math.floorDiv(miny, 16) * 16;
-                        minz = Math.floorDiv(minz, 16) * 16;
-                        maxx = Math.floorDiv(maxx, 16) * 16 + 15;
-                        maxy = Math.floorDiv(maxy, 16) * 16 + 15;
-                        maxz = Math.floorDiv(maxz, 16) * 16 + 15;
-                    }
-
-                    // Only fill if volume is smaller than maximum
-                    double volume = (double) (maxx - minx + 1) * (maxy - miny + 1) * (maxz - minz + 1) / 4096;
-                    if (volume <= Config.maxVolumeManual)
-                        FillHelper.fillBits(block, minx, miny, minz, maxx, maxy, maxz, true, true);
-                    haspos1 = false;
+                // Adjust origin to player position if unlocked mode is enabled
+                if (Config.unlockedMode) {
+                    minx += 16 * (block.getX() - player.getBlockX());
+                    miny += 16 * (block.getY() - player.getBlockY());
+                    minz += 16 * (block.getZ() - player.getBlockZ());
+                    maxx += 16 * (block.getX() - player.getBlockX());
+                    maxy += 16 * (block.getY() - player.getBlockY());
+                    maxz += 16 * (block.getZ() - player.getBlockZ());
+                    block = player.getBlockPos();
                 }
+
+                // Adjust to full blocks if full blocks only is enabled
+                if (Config.fullBlocksOnly) {
+                    minx = Math.floorDiv(minx, 16) * 16;
+                    miny = Math.floorDiv(miny, 16) * 16;
+                    minz = Math.floorDiv(minz, 16) * 16;
+                    maxx = Math.floorDiv(maxx, 16) * 16 + 15;
+                    maxy = Math.floorDiv(maxy, 16) * 16 + 15;
+                    maxz = Math.floorDiv(maxz, 16) * 16 + 15;
+                }
+
+                // Only fill if volume is smaller than maximum
+                double volume = (double) (maxx - minx + 1) * (maxy - miny + 1) * (maxz - minz + 1) / 4096;
+                if (volume <= Config.maxVolumeManual)
+                    FillHelper.fillBits(block, minx, miny, minz, maxx, maxy, maxz, true, true);
+                haspos1 = false;
                 return ActionResult.SUCCESS;
             }
         }

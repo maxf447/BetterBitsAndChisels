@@ -225,101 +225,89 @@ public class BitItem extends Item implements ServerPlayNetworking.PlayChannelHan
         BlockPos pos = context.getBlockPos();
         MinecraftClient client = MinecraftClient.getInstance();
         HitResult hit = client.crosshairTarget;
-            
-        if (hit.getType() == HitResult.Type.BLOCK) {
-            Direction direction = ((BlockHitResult)hit).getSide();
-            int x = ((int) Math.floor(((hit.getPos().getX() - pos.getX()) * 16) + (direction.getOffsetX() * -0.5d))) + direction.getOffsetX();
-            int y = ((int) Math.floor(((hit.getPos().getY() - pos.getY()) * 16) + (direction.getOffsetY() * -0.5d))) + direction.getOffsetY();
-            int z = ((int) Math.floor(((hit.getPos().getZ() - pos.getZ()) * 16) + (direction.getOffsetZ() * -0.5d))) + direction.getOffsetZ();
 
-            if (x > 15) {
-                pos = pos.add(1, 0, 0);
-                x -= 16;
-            }
-            if (y > 15) {
-                pos = pos.add(0, 1, 0);
-                y -= 16;
-            }
-            if (z > 15) {
-                pos = pos.add(0, 0, 1);
-                z -= 16;
-            }
-            if (x < 0) {
-                pos = pos.add(-1, 0, 0);
-                x += 16;
-            }
-            if (y < 0) {
-                pos = pos.add(0, -1, 0);
-                y += 16;
-            }
-            if (z < 0) {
-                pos = pos.add(0, 0, -1);
-                z += 16;
-            }
+        Direction direction = ((BlockHitResult)hit).getSide();
+        int x = ((int) Math.floor(((hit.getPos().getX() - pos.getX()) * 16) + (direction.getOffsetX() * -0.5d))) + direction.getOffsetX();
+        int y = ((int) Math.floor(((hit.getPos().getY() - pos.getY()) * 16) + (direction.getOffsetY() * -0.5d))) + direction.getOffsetY();
+        int z = ((int) Math.floor(((hit.getPos().getZ() - pos.getZ()) * 16) + (direction.getOffsetZ() * -0.5d))) + direction.getOffsetZ();
 
-            if (BitUtils.canPlace(context.getPlayer(), pos, x, y, z)) {
+        if (x > 15) {
+            pos = pos.add(1, 0, 0);
+            x -= 16;
+        }
+        if (y > 15) {
+            pos = pos.add(0, 1, 0);
+            y -= 16;
+        }
+        if (z > 15) {
+            pos = pos.add(0, 0, 1);
+            z -= 16;
+        }
+        if (x < 0) {
+            pos = pos.add(-1, 0, 0);
+            x += 16;
+        }
+        if (y < 0) {
+            pos = pos.add(0, -1, 0);
+            y += 16;
+        }
+        if (z < 0) {
+            pos = pos.add(0, 0, -1);
+            z += 16;
+        }
 
-                if (!haspos1) {
-                    block = pos;
-                    bitx = x;
-                    bity = y;
-                    bitz = z;
-                    // Player is sneaking (going to select a second point)
-                    if (context.getPlayer().isSneaking()) {
-                        haspos1 = true;
-                        return ActionResult.SUCCESS;
-                    }
-                }
-
-                int blockXOffset = pos.getX() - block.getX();
-                int blockYOffset = pos.getY() - block.getY();
-                int blockZOffset = pos.getZ() - block.getZ();
-
-                int minx = Math.min(bitx, blockXOffset * 16 + x);
-                int miny = Math.min(bity, blockYOffset * 16 + y);
-                int minz = Math.min(bitz, blockZOffset * 16 + z);
-
-                int maxx = Math.max(bitx, blockXOffset * 16 + x);
-                int maxy = Math.max(bity, blockYOffset * 16 + y);
-                int maxz = Math.max(bitz, blockZOffset * 16 + z);
-
-                // Adjust origin to player position if unlocked mode is enabled
-                if (Config.unlockedMode) {
-                    minx += 16 * (block.getX() - client.player.getBlockX());
-                    miny += 16 * (block.getY() - client.player.getBlockY());
-                    minz += 16 * (block.getZ() - client.player.getBlockZ());
-                    maxx += 16 * (block.getX() - client.player.getBlockX());
-                    maxy += 16 * (block.getY() - client.player.getBlockY());
-                    maxz += 16 * (block.getZ() - client.player.getBlockZ());
-                    block = client.player.getBlockPos();
-                }
-
-                // Adjust to full blocks if full blocks only is enabled
-                if (Config.fullBlocksOnly) {
-                    minx = Math.floorDiv(minx, 16) * 16;
-                    miny = Math.floorDiv(miny, 16) * 16;
-                    minz = Math.floorDiv(minz, 16) * 16;
-                    maxx = Math.floorDiv(maxx, 16) * 16 + 15;
-                    maxy = Math.floorDiv(maxy, 16) * 16 + 15;
-                    maxz = Math.floorDiv(maxz, 16) * 16 + 15;
-                }
-
-                // Only fill if volume is smaller than maximum
-                double volume = (double) (maxx - minx + 1) * (maxy - miny + 1) * (maxz - minz + 1) / 4096;
-                if (volume <= Config.maxVolumeManual)
-                    FillHelper.fillBits(block, minx, miny, minz, maxx, maxy, maxz, context.getHand().equals(Hand.MAIN_HAND), false);
-
-                haspos1 = false;
-                return ActionResult.SUCCESS;
-            } else {
-                this.block = pos;
-                bitx = x;
-                bity = y;
-                bitz = z;
+        if (!haspos1) {
+            block = pos;
+            bitx = x;
+            bity = y;
+            bitz = z;
+            // Player is sneaking (going to select a second point)
+            if (context.getPlayer().isSneaking()) {
                 haspos1 = true;
+                return ActionResult.SUCCESS;
             }
         }
-        return ActionResult.PASS;
+
+        int blockXOffset = pos.getX() - block.getX();
+        int blockYOffset = pos.getY() - block.getY();
+        int blockZOffset = pos.getZ() - block.getZ();
+
+        int minx = Math.min(bitx, blockXOffset * 16 + x);
+        int miny = Math.min(bity, blockYOffset * 16 + y);
+        int minz = Math.min(bitz, blockZOffset * 16 + z);
+
+        int maxx = Math.max(bitx, blockXOffset * 16 + x);
+        int maxy = Math.max(bity, blockYOffset * 16 + y);
+        int maxz = Math.max(bitz, blockZOffset * 16 + z);
+
+        // Adjust origin to player position if unlocked mode is enabled
+        if (Config.unlockedMode) {
+            minx += 16 * (block.getX() - client.player.getBlockX());
+            miny += 16 * (block.getY() - client.player.getBlockY());
+            minz += 16 * (block.getZ() - client.player.getBlockZ());
+            maxx += 16 * (block.getX() - client.player.getBlockX());
+            maxy += 16 * (block.getY() - client.player.getBlockY());
+            maxz += 16 * (block.getZ() - client.player.getBlockZ());
+            block = client.player.getBlockPos();
+        }
+
+        // Adjust to full blocks if full blocks only is enabled
+        if (Config.fullBlocksOnly) {
+            minx = Math.floorDiv(minx, 16) * 16;
+            miny = Math.floorDiv(miny, 16) * 16;
+            minz = Math.floorDiv(minz, 16) * 16;
+            maxx = Math.floorDiv(maxx, 16) * 16 + 15;
+            maxy = Math.floorDiv(maxy, 16) * 16 + 15;
+            maxz = Math.floorDiv(maxz, 16) * 16 + 15;
+        }
+
+        // Only fill if volume is smaller than maximum
+        double volume = (double) (maxx - minx + 1) * (maxy - miny + 1) * (maxz - minz + 1) / 4096;
+        if (volume <= Config.maxVolumeManual)
+            FillHelper.fillBits(block, minx, miny, minz, maxx, maxy, maxz, context.getHand().equals(Hand.MAIN_HAND), false);
+
+        haspos1 = false;
+        return ActionResult.SUCCESS;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package io.github.coolmineman.bitsandchisels.custom;
 
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import io.github.coolmineman.bitsandchisels.BitsAndChisels;
 import net.fabricmc.api.ClientModInitializer;
@@ -48,8 +49,12 @@ public class CommandProcessor implements ClientModInitializer {
                     .then(literal("set"))
                     .then(literal("del")))
                 .then(literal("pillar")
-                    .then(literal("set"))
-                    .then(literal("del")))
+                    .then(literal("set")
+                        .then(argument("pillar", IntegerArgumentType.integer(0, 9))
+                            .executes(context -> pillarCommand(context, false))))
+                    .then(literal("del")
+                            .then(argument("pillar", IntegerArgumentType.integer(0, 9))
+                                    .executes(context -> pillarCommand(context, true)))))
                     .then(literal("info")
                         .executes(this::infoCommand))
             );
@@ -99,8 +104,14 @@ public class CommandProcessor implements ClientModInitializer {
         return 0;
     }
 
-    private int pillarsCommand(CommandContext<FabricClientCommandSource> context, boolean breakPacket) {
-        return 0;
+    private int pillarCommand(CommandContext<FabricClientCommandSource> context, boolean breakPacket) {
+        if (!holdingCorrect(breakPacket)) {
+            context.getSource().sendFeedback(Text.literal(
+                            String.format("Not holding %s!", breakPacket ? "Smart Chisel" : "bits"))
+                    .formatted(Formatting.RED));
+            return -1;
+        }
+        return 1;
     }
 
     private int infoCommand(CommandContext<FabricClientCommandSource> context) {
@@ -124,7 +135,7 @@ public class CommandProcessor implements ClientModInitializer {
             .append(Text.literal("/bc sphere <set|del> <x1> <y1> <z1> <r0> <r1>\n").formatted(Formatting.AQUA))
             .append(Text.literal("Sets or deletes a sphere defined by a center, inner radius, and outer radius\n\n"))
             .append(Text.literal("/bc pillar <set|del> <number>\n").formatted(Formatting.AQUA))
-            .append(Text.literal("Sets or deletes a specified end pillar"));
+            .append(Text.literal("Sets or deletes a specified end pillar (clockwise from the pillar closest to the obsidian platform)"));
         context.getSource().sendFeedback(msg);
         return 1;
     }
