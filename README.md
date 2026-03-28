@@ -1,3 +1,20 @@
+# Advanced Bits And Chisels
+This is a modified version of the Bits and Chisels mod, which adds advanced features and removes client-side limitations on what one can do.
+
+## Changes
+- Bits and Smart Chisels can be toggled between placing/breaking individual bits and placing/breaking entire blocks by left clicking the air.
+- Bit placement selection is persistent when unsneaking and only resets on upon left clicking a block.
+- Smart Chisel placement selection now resets upon right clicking a block.
+- Smart Chisels now destroy a single bit/block by default; sneaking and left clicking allows a selection to be created (similarly to bits).
+- Bits and Smart Chisels now show a HUD which shows the dimensions, volume, and estimated number of fills required to modify the current selection.
+- Client-side limits on the size of the area selected with the bits and Smart Chisel can be unlocked in the config to allow arbitrarily large selections.
+- The origin position for bits and Smart Chisel packets is adjusted to allow actions at arbitrary distances.
+- Client-side commands to directly fill or delete a block or a region of blocks have been added (`/bc info` for information).
+- Large area modification packets are sent in multiple spaced-out chunks to avoid hitting server-side limits and mitigate server lag.
+
+## Config
+The config file is located in `config/bits_and_chisels.conf`.
+
 # Bits And Chisels
 ![Java CI with Brachyura](https://github.com/CoolMineman/BitsAndChisels/workflows/Java%20CI%20with%20Brachyura/badge.svg)
 [https://github.com/CoolMineman/BitsAndChisels](https://github.com/CoolMineman/BitsAndChisels)
