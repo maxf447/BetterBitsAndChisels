@@ -1,5 +1,6 @@
 package io.github.coolmineman.bitsandchisels.custom;
 
+import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import io.github.coolmineman.bitsandchisels.BitsAndChisels;
@@ -46,17 +47,25 @@ public class CommandProcessor implements ClientModInitializer {
 
                 )
                 .then(literal("sphere")
-                    .then(literal("set"))
-                    .then(literal("del")))
+                    .then(literal("set")
+                        .then(argument("center", CBlockPosArgumentType.blockPos()))
+                            .then(argument("radius", DoubleArgumentType.doubleArg(0, 1024))
+                                .executes(context -> sphereCommand(context, false))))
+                    .then(literal("del")
+                        .then(argument("center", CBlockPosArgumentType.blockPos()))
+                            .then(argument("radius", DoubleArgumentType.doubleArg(0, 1024))
+                                .executes(context -> sphereCommand(context, true))))
+                )
                 .then(literal("pillar")
                     .then(literal("set")
                         .then(argument("pillar", IntegerArgumentType.integer(0, 9))
                             .executes(context -> pillarCommand(context, false))))
                     .then(literal("del")
                             .then(argument("pillar", IntegerArgumentType.integer(0, 9))
-                                    .executes(context -> pillarCommand(context, true)))))
-                    .then(literal("info")
-                        .executes(this::infoCommand))
+                                    .executes(context -> pillarCommand(context, true))))
+                )
+                .then(literal("info")
+                    .executes(this::infoCommand))
             );
         });
     }
@@ -101,7 +110,27 @@ public class CommandProcessor implements ClientModInitializer {
     }
 
     private int sphereCommand(CommandContext<FabricClientCommandSource> context, boolean breakPacket) {
-        return 0;
+        BlockPos pos = CBlockPosArgumentType.getCBlockPos(context, "center");
+        Double r = DoubleArgumentType.getDouble(context, "radius");
+
+        if ((double) 4 / 3 * Math.PI * r * r * r > Config.maxVolumeCommands) {
+            context.getSource().sendFeedback(Text.literal(
+                String.format("Volume %s larger than maximum of %s!", 4 / 3 * Math.PI * r * r * r, Config.maxVolumeCommands))
+                    .formatted(Formatting.RED));
+            return -1;
+        }
+        if (!holdingCorrect(breakPacket)) {
+            context.getSource().sendFeedback(Text.literal(
+                            String.format("Not holding %s!", breakPacket ? "Smart Chisel" : "bits"))
+                    .formatted(Formatting.RED));
+            return -1;
+        }
+        else {
+            context.getSource().sendFeedback(Text.literal(
+                    String.format("%s sphere of radius %s at (%s, %s, %s)", breakPacket ? "Deleting" : "Setting", r, pos.getX(), pos.getY(), pos.getZ())));
+            FillHelper.fillSphere(pos, r, true, breakPacket);
+            return 1;
+        }
     }
 
     private int pillarCommand(CommandContext<FabricClientCommandSource> context, boolean breakPacket) {

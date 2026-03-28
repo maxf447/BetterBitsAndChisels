@@ -17,29 +17,27 @@ public class FillHelper {
     // Fills an area specified by corners in blocks (x1, y1, z1) and (x2, y2, z2)
     public static void fillBlocks(int x1, int y1, int z1, int x2, int y2, int z2, boolean mainhand, boolean breakPacket) {
 
-        BlockPos pos = MinecraftClient.getInstance().player.getBlockPos();
-
-        // Find min/max corners relative to player position, in relative bits
-        int minX = 16 * (Math.min(x1, x2) - pos.getX());
-        int minY = 16 * (Math.min(y1, y2) - pos.getY());
-        int minZ = 16 * (Math.min(z1, z2) - pos.getZ());
-        int maxX = 16 * (Math.max(x1, x2) - pos.getX()) + 15;
-        int maxY = 16 * (Math.max(y1, y2) - pos.getY()) + 15;
-        int maxZ = 16 * (Math.max(z1, z2) - pos.getZ()) + 15;
+        // Find min/max corners in bits
+        int minX = 16 * Math.min(x1, x2);
+        int minY = 16 * Math.min(y1, y2);
+        int minZ = 16 * Math.min(z1, z2);
+        int maxX = 16 * Math.max(x1, x2) + 15;
+        int maxY = 16 * Math.max(y1, y2)+ 15;
+        int maxZ = 16 * Math.max(z1, z2) + 15;
 
         // Fill area in bits
-        fillBits(pos, minX, minY, minZ, maxX, maxY, maxZ, mainhand, breakPacket);
+        fillBits(BlockPos.ORIGIN, minX, minY, minZ, maxX, maxY, maxZ, mainhand, breakPacket, true);
     }
 
     // Fills an area specified by bits offset corners (x1, y1, z1) and (x2, y2, z2) and an origin pos (must be sorted)
-    public static void fillBits(BlockPos pos, int x1, int y1, int z1, int x2, int y2, int z2, boolean mainhand, boolean breakPacket) {
+    public static void fillBits(BlockPos pos, int x1, int y1, int z1, int x2, int y2, int z2, boolean mainhand, boolean breakPacket, boolean recenter) {
         // Split into regions
         ArrayList<int[]> regions = splitRegion(x1, y1, z1, x2, y2, z2);
 
         // Only one region; process synchronously
         if (regions.size() == 1) {
             int[] r = regions.get(0);
-            sendPacket(pos, r[0], r[1], r[2], r[3], r[4], r[5], mainhand, breakPacket);
+            sendPacket(pos, r[0], r[1], r[2], r[3], r[4], r[5], mainhand, breakPacket, recenter);
         }
 
         // Multiple regions; process in a thread
@@ -47,22 +45,9 @@ public class FillHelper {
             // Reverse array if we're breaking to break top down
             if (breakPacket) Collections.reverse(regions);
 
-            ClientPlayerEntity player = MinecraftClient.getInstance().player;
             new Thread(() -> {
                 for (int[] r : regions) {
-                    // Recenter to player if unlocked mode is enabled (player may have moved)
-                    if (Config.unlockedMode) {
-                        BlockPos playerPos = player.getBlockPos();
-                        r[0] += 16 * (pos.getX() - playerPos.getX());
-                        r[1] += 16 * (pos.getY() - playerPos.getY());
-                        r[2] += 16 * (pos.getZ() - playerPos.getZ());
-                        r[3] += 16 * (pos.getX() - playerPos.getX());
-                        r[4] += 16 * (pos.getY() - playerPos.getY());
-                        r[5] += 16 * (pos.getZ() - playerPos.getZ());
-                        sendPacket(playerPos, r[0], r[1], r[2], r[3], r[4], r[5], mainhand, breakPacket);
-                    }
-                    // Otherwise don't recenter
-                    else sendPacket(pos, r[0], r[1], r[2], r[3], r[4], r[5], mainhand, breakPacket);
+                    sendPacket(pos, r[0], r[1], r[2], r[3], r[4], r[5], mainhand, breakPacket, recenter);
                     try {
                         Thread.sleep(Config.packetSendInterval);
                     }
@@ -72,8 +57,30 @@ public class FillHelper {
         }
     }
 
+    public static void fillSphere(BlockPos center, double r, boolean mainhand, boolean breakPacket) {
+        // Convert radius to bits
+        r *= 16;
+        // Fill central cuboid
+        int c = (int) (r / Math.sqrt(3));
+        fillBits(center, -c, -c, -c, c, c, c, mainhand, breakPacket, true);
+    }
+
+    public static void fillAboveFace() {}
+
     // Sends a single packet to break or fill an area of bits from (x1, y1, z1) to (x2, y2, z2) ([xyz]1 must be < [xyz]2 for each axis)
-    public static void sendPacket(BlockPos pos, int x1, int y1, int z1, int x2, int y2, int z2, boolean mainhand, boolean breakPacket) {
+    public static void sendPacket(BlockPos pos, int x1, int y1, int z1, int x2, int y2, int z2, boolean mainhand, boolean breakPacket, boolean recenter) {
+        // Recenter to player if unlocked mode is enabled
+        if (recenter) {
+            BlockPos playerPos = MinecraftClient.getInstance().player.getBlockPos();
+            x1 += 16 * (pos.getX() - playerPos.getX());
+            y1 += 16 * (pos.getY() - playerPos.getY());
+            z1 += 16 * (pos.getZ() - playerPos.getZ());
+            x2 += 16 * (pos.getX() - playerPos.getX());
+            y2 += 16 * (pos.getY() - playerPos.getY());
+            z2 += 16 * (pos.getZ() - playerPos.getZ());
+            pos = playerPos;
+        }
+
         // Create and send packet
         PacketByteBuf packet = new PacketByteBuf(Unpooled.buffer());
         packet.writeBlockPos(pos);

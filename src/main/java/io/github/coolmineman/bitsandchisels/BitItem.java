@@ -280,17 +280,6 @@ public class BitItem extends Item implements ServerPlayNetworking.PlayChannelHan
         int maxy = Math.max(bity, blockYOffset * 16 + y);
         int maxz = Math.max(bitz, blockZOffset * 16 + z);
 
-        // Adjust origin to player position if unlocked mode is enabled
-        if (Config.unlockedMode) {
-            minx += 16 * (block.getX() - client.player.getBlockX());
-            miny += 16 * (block.getY() - client.player.getBlockY());
-            minz += 16 * (block.getZ() - client.player.getBlockZ());
-            maxx += 16 * (block.getX() - client.player.getBlockX());
-            maxy += 16 * (block.getY() - client.player.getBlockY());
-            maxz += 16 * (block.getZ() - client.player.getBlockZ());
-            block = client.player.getBlockPos();
-        }
-
         // Adjust to full blocks if full blocks only is enabled
         if (Config.fullBlocksOnly) {
             minx = Math.floorDiv(minx, 16) * 16;
@@ -304,7 +293,7 @@ public class BitItem extends Item implements ServerPlayNetworking.PlayChannelHan
         // Only fill if volume is smaller than maximum
         double volume = (double) (maxx - minx + 1) * (maxy - miny + 1) * (maxz - minz + 1) / 4096;
         if (volume <= Config.maxVolumeManual)
-            FillHelper.fillBits(block, minx, miny, minz, maxx, maxy, maxz, context.getHand().equals(Hand.MAIN_HAND), false);
+            FillHelper.fillBits(block, minx, miny, minz, maxx, maxy, maxz, context.getHand().equals(Hand.MAIN_HAND), false, Config.unlockedMode);
 
         haspos1 = false;
         return ActionResult.SUCCESS;

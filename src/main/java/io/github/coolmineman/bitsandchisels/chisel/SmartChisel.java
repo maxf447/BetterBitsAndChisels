@@ -178,17 +178,6 @@ public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayCh
                 int maxy = Math.max(bity, blockYOffset * 16 + y);
                 int maxz = Math.max(bitz, blockZOffset * 16 + z);
 
-                // Adjust origin to player position if unlocked mode is enabled
-                if (Config.unlockedMode) {
-                    minx += 16 * (block.getX() - player.getBlockX());
-                    miny += 16 * (block.getY() - player.getBlockY());
-                    minz += 16 * (block.getZ() - player.getBlockZ());
-                    maxx += 16 * (block.getX() - player.getBlockX());
-                    maxy += 16 * (block.getY() - player.getBlockY());
-                    maxz += 16 * (block.getZ() - player.getBlockZ());
-                    block = player.getBlockPos();
-                }
-
                 // Adjust to full blocks if full blocks only is enabled
                 if (Config.fullBlocksOnly) {
                     minx = Math.floorDiv(minx, 16) * 16;
@@ -202,7 +191,7 @@ public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayCh
                 // Only fill if volume is smaller than maximum
                 double volume = (double) (maxx - minx + 1) * (maxy - miny + 1) * (maxz - minz + 1) / 4096;
                 if (volume <= Config.maxVolumeManual)
-                    FillHelper.fillBits(block, minx, miny, minz, maxx, maxy, maxz, true, true);
+                    FillHelper.fillBits(block, minx, miny, minz, maxx, maxy, maxz, true, true, Config.unlockedMode);
                 haspos1 = false;
                 return ActionResult.SUCCESS;
             }
