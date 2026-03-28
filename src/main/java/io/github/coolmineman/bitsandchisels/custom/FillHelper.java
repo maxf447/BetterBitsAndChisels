@@ -57,15 +57,141 @@ public class FillHelper {
         }
     }
 
+    // Fills a sphere centered at center, of radius r blocks
     public static void fillSphere(BlockPos center, double r, boolean mainhand, boolean breakPacket) {
         // Convert radius to bits
         r *= 16;
         // Fill central cuboid
         int c = (int) (r / Math.sqrt(3));
         fillBits(center, -c, -c, -c, c, c, c, mainhand, breakPacket, true);
+
+        // Fill each face of cuboid
+        for (int[] normal : new int[][]{
+            new int[]{1, 0, 0}, new int[]{0, 1, 0}, new int[]{0, 0, 1},
+            new int[]{-1, 0, 0}, new int[]{0, -1, 0}, new int[]{0, 0, -1}
+        }) {
+            fillAboveFace(center, r, c + 1, normal, mainhand, breakPacket);
+        }
     }
 
-    public static void fillAboveFace() {}
+    // Takes the distance of an outwards facing face and its normal vector; finds the largest cuboid centered
+    // on the face that fits between the face and the edge of the sphere, sets it, then recurses on its top face
+    // Only used directly outwards on the central faces
+    public static void fillAboveFace(BlockPos center, double r, int faceRadius, int[] normal, boolean mainhand, boolean breakPacket) {
+        int width = 1;
+        int height;
+        // Find optimal width for cuboid placed above face
+        while (true) {
+            // Check current and next
+            height = (int) circleHeight(r, (double) width * Math.sqrt(2)) - faceRadius;
+            int nextHeight = (int) circleHeight(r, (double) (width + 1) * Math.sqrt(2)) - faceRadius;
+            int volume = (2 * width + 1) * (2 * width + 1) * (height + 1);
+            int nextVolume = (2 * (width + 1) + 1) * (2 * (width + 1) + 1) * (nextHeight + 1);
+            System.out.printf("Searching; width: %s, height: %s, volume: %s, nexth: %s, nextv: %s\n", width, height, volume, nextHeight, nextVolume);
+            // Continue if next is greater than current
+            if (nextVolume > volume) width++;
+            else break;
+        }
+        // Place cuboid
+        System.out.printf("Optimal width, height: %s, %s\n", width, height);
+        if (height >= 0) {
+            int[] bounds = new int[6];
+            for (int i = 0; i < 3; i++) {
+                if (normal[i] == 1) {
+                    bounds[i] = faceRadius;
+                    bounds[i + 3] = faceRadius + height;
+                } else if (normal[i] == -1) {
+                    bounds[i] = -faceRadius - height;
+                    bounds[i + 3] = -faceRadius;
+                } else {
+                    bounds[i] = -width;
+                    bounds[i + 3] = width;
+                }
+            }
+            System.out.printf("Bounds: (%s, %s, %s) -> (%s, %s, %s)\n", bounds[0], bounds[1], bounds[2], bounds[3], bounds[4], bounds[5]);
+            sendPacket(center, bounds[0], bounds[1], bounds[2], bounds[3], bounds[4], bounds[5], mainhand, breakPacket, true);
+            // Recurse on main face
+            fillAboveFace(center, r, faceRadius + height + 1, normal, mainhand, breakPacket);
+            // Recurse on diagonal faces
+            for (int[] vertNormal : new int[][]{
+                    new int[]{1, 0, 0}, new int[]{0, 1, 0}, new int[]{0, 0, 1},
+                    new int[]{-1, 0, 0}, new int[]{0, -1, 0}, new int[]{0, 0, -1}
+            }) {
+                // Skip if face normal is aligned with normal
+                if ((vertNormal[0] != 0 && normal[0] != 0) || (vertNormal[1] != 0 && normal[1] != 0) || (vertNormal[2] != 0 && normal[2] != 0)) continue;
+                // Recurse
+                System.out.println("Recursing on face");
+                fillAboveDiagonalFace(center, r, faceRadius, width + 1, normal, vertNormal, (int) r, mainhand, breakPacket);
+            }
+        }
+    }
+
+    // Takes the parameters of diagonal outwards facing face and its normal vector, and finds the largest cuboid
+    // that can be placed with the given parameters
+    public static void fillAboveDiagonalFace(BlockPos center, double r, int faceRadius, int vertFaceRadius, int[] faceNormal, int[] vertFaceNormal, int parentVertRadius, boolean mainhand, boolean breakPacket) {
+        int width = 0;
+        int outwards = 0;
+        int height;
+        // Find optimal width & outwards
+        while (true) {
+            // Compute volumes for steps in width or outwards
+            height = (int) sphereHeight(r, vertFaceRadius, width, outwards) - faceRadius;
+            int heightNextWidth = (int) sphereHeight(r, vertFaceRadius, width + 1, outwards) - faceRadius;
+            int heightNextOutwards;
+            if (vertFaceRadius + outwards + 1 <= parentVertRadius)
+                heightNextOutwards = (int) sphereHeight(r, vertFaceRadius, width, outwards + 1) - faceRadius;
+            else heightNextOutwards = -1;
+            int volume = (height + 1) * (2 * width + 1) * (outwards + 1);
+            int volumeNextWidth = (heightNextWidth + 1) * (2 * (width + 1) + 1) * (outwards + 1);
+            int volumeNextOutwards = (heightNextOutwards + 1) * (2 * width + 1) * (outwards + 2);
+            System.out.printf("Searching; width %s, outwards %s, height %s, vol %s, wvol %s, ovol %s\n", width, outwards, height, volume, volumeNextWidth, volumeNextOutwards);
+            // Choose the step which gives the greatest gain, or exit if both are less
+            if (volumeNextWidth > volumeNextOutwards && volumeNextWidth > volume) width++;
+            else if (volumeNextOutwards >= volumeNextWidth && volumeNextOutwards > volume) outwards++;
+            else break;
+        }
+        System.out.printf("Optimal: width %s, outwards %s, height %s, vol %s, placing\n", width, outwards, height, (height + 1) * (width + 1) * (outwards + 1));
+        // Place cuboid
+        if (height >= 0) {
+            int[] bounds = new int[6];
+            for (int i = 0; i < 3; i++) {
+                if (faceNormal[i] == 1) {
+                    bounds[i] = faceRadius;
+                    bounds[i + 3] = faceRadius + height;
+                }
+                else if (faceNormal[i] == -1) {
+                    bounds[i] = -faceRadius - height;
+                    bounds[i + 3] = -faceRadius;
+                }
+                else if (vertFaceNormal[i] == 1) {
+                    bounds[i] = vertFaceRadius;
+                    bounds[i + 3] = vertFaceRadius + outwards;
+                }
+                else if (vertFaceNormal[i] == -1) {
+                    bounds[i] = -vertFaceRadius - outwards;
+                    bounds[i + 3] = -vertFaceRadius;
+                }
+                else {
+                    bounds[i] = -width;
+                    bounds[i + 3] = width;
+                }
+            }
+            System.out.printf("Diagonal Bounds: (%s, %s, %s) -> (%s, %s, %s)\n", bounds[0], bounds[1], bounds[2], bounds[3], bounds[4], bounds[5]);
+            sendPacket(center, bounds[0], bounds[1], bounds[2], bounds[3], bounds[4], bounds[5], mainhand, breakPacket, true);
+            // Recurse on new faces
+            fillAboveDiagonalFace(center, r, faceRadius + height + 1, vertFaceRadius, faceNormal, vertFaceNormal, vertFaceRadius, mainhand, breakPacket);
+            fillAboveDiagonalFace(center, r, faceRadius, vertFaceRadius + outwards + 1, faceNormal, vertFaceNormal, parentVertRadius, mainhand, breakPacket);
+        }
+    }
+
+    public static double sphereHeight(double r, int vertFaceRadius, int width, int outwards) {
+        double boundedCircleRadius = circleHeight(r, vertFaceRadius + outwards);
+        return circleHeight(boundedCircleRadius, width);
+    }
+
+    public static double circleHeight(double r, double width) {
+        return r * Math.sin(Math.acos(width / r));
+    }
 
     // Sends a single packet to break or fill an area of bits from (x1, y1, z1) to (x2, y2, z2) ([xyz]1 must be < [xyz]2 for each axis)
     public static void sendPacket(BlockPos pos, int x1, int y1, int z1, int x2, int y2, int z2, boolean mainhand, boolean breakPacket, boolean recenter) {
