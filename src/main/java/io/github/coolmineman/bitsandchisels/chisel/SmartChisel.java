@@ -3,9 +3,7 @@ package io.github.coolmineman.bitsandchisels.chisel;
 import io.github.coolmineman.bitsandchisels.BitsAndChisels;
 import io.github.coolmineman.bitsandchisels.api.BitUtils;
 import io.github.coolmineman.bitsandchisels.api.client.RedBoxCallback;
-import io.github.coolmineman.bitsandchisels.custom.Config;
-import io.github.coolmineman.bitsandchisels.custom.FillHelper;
-import io.github.coolmineman.bitsandchisels.custom.HeadsUpDisplay;
+import io.github.coolmineman.bitsandchisels.custom.*;
 import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -20,6 +18,7 @@ import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
@@ -176,10 +175,13 @@ public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayCh
                     maxz = Math.floorDiv(maxz, 16) * 16 + 15;
                 }
 
-                // Only fill if volume is smaller than maximum
-                double volume = (double) (maxx - minx + 1) * (maxy - miny + 1) * (maxz - minz + 1) / 4096;
-                if (volume <= Config.maxVolumeManual)
-                    FillHelper.fillBits(block, minx, miny, minz, maxx, maxy, maxz, true, true, Config.unlockedMode);
+                // Only break if volume is smaller than maximum
+                Operation op = new Operation(
+                        block, minx, miny, minz, maxx, maxy, maxz,
+                        Hand.MAIN_HAND, OperationType.PLACE, Config.unlockedMode
+                );
+                if (Utils.volume(op) <= Config.maxVolumeManual) OperationProcessor.processOperation(op);
+
                 haspos1 = false;
                 return ActionResult.SUCCESS;
             }

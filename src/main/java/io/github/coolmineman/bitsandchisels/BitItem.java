@@ -2,9 +2,7 @@ package io.github.coolmineman.bitsandchisels;
 
 import io.github.coolmineman.bitsandchisels.api.BitUtils;
 import io.github.coolmineman.bitsandchisels.api.client.RedBoxCallback;
-import io.github.coolmineman.bitsandchisels.custom.Config;
-import io.github.coolmineman.bitsandchisels.custom.FillHelper;
-import io.github.coolmineman.bitsandchisels.custom.HeadsUpDisplay;
+import io.github.coolmineman.bitsandchisels.custom.*;
 import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -279,9 +277,11 @@ public class BitItem extends Item implements ServerPlayNetworking.PlayChannelHan
         }
 
         // Only fill if volume is smaller than maximum
-        double volume = (double) (maxx - minx + 1) * (maxy - miny + 1) * (maxz - minz + 1) / 4096;
-        if (volume <= Config.maxVolumeManual)
-            FillHelper.fillBits(block, minx, miny, minz, maxx, maxy, maxz, context.getHand().equals(Hand.MAIN_HAND), false, Config.unlockedMode);
+        Operation op = new Operation(
+            block, minx, miny, minz, maxx, maxy, maxz,
+            context.getHand(), OperationType.PLACE, Config.unlockedMode
+        );
+        if (Utils.volume(op) <= Config.maxVolumeManual) OperationProcessor.processOperation(op);
 
         haspos1 = false;
         return ActionResult.SUCCESS;

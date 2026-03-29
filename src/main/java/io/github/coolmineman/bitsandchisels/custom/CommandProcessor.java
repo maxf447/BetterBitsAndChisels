@@ -3,13 +3,10 @@ package io.github.coolmineman.bitsandchisels.custom;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
-import io.github.coolmineman.bitsandchisels.BitsAndChisels;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.item.Item;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
@@ -24,97 +21,96 @@ public class CommandProcessor implements ClientModInitializer {
         // Load config
         Config.loadConfig();
 
-        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) ->
             dispatcher.register(ClientCommandManager.literal("bc")
-                .then(literal("block")
-                        .then(literal("set")
-                            .then(argument("pos", CBlockPosArgumentType.blockPos())
-                                .executes(context -> blockCommand(context, false))))
-                        .then(literal("del")
-                            .then(argument("pos", CBlockPosArgumentType.blockPos())
-                                .executes(context -> blockCommand(context, true))))
-
-                )
-                .then(literal("cube")
+            .then(literal("block")
                     .then(literal("set")
-                        .then(argument("pos1", CBlockPosArgumentType.blockPos())
-                            .then(argument("pos2", CBlockPosArgumentType.blockPos())
-                                .executes(context -> cubeCommand(context, false)))))
+                        .then(argument("pos", CBlockPosArgumentType.blockPos())
+                            .executes(context -> blockCommand(context, OperationType.PLACE))))
                     .then(literal("del")
-                        .then(argument("pos1", CBlockPosArgumentType.blockPos())
-                            .then(argument("pos2", CBlockPosArgumentType.blockPos())
-                                .executes(context -> cubeCommand(context, true)))))
+                        .then(argument("pos", CBlockPosArgumentType.blockPos())
+                            .executes(context -> blockCommand(context, OperationType.BREAK))))
 
-                )
-                .then(literal("sphere")
-                    .then(literal("set")
+            )
+            .then(literal("cube")
+                .then(literal("set")
+                    .then(argument("pos1", CBlockPosArgumentType.blockPos())
+                        .then(argument("pos2", CBlockPosArgumentType.blockPos())
+                            .executes(context -> cubeCommand(context, OperationType.PLACE)))))
+                .then(literal("del")
+                    .then(argument("pos1", CBlockPosArgumentType.blockPos())
+                        .then(argument("pos2", CBlockPosArgumentType.blockPos())
+                            .executes(context -> cubeCommand(context, OperationType.BREAK)))))
+
+            )
+            .then(literal("sphere")
+                .then(literal("set")
+                    .then(argument("center", CBlockPosArgumentType.blockPos())
+                        .then(argument("inner radius", DoubleArgumentType.doubleArg(0, 1024))
+                            .then(argument("outer radius", DoubleArgumentType.doubleArg(0, 1024))
+                                .executes(context -> sphereCommand(context, OperationType.PLACE))))))
+                .then(literal("del")
                         .then(argument("center", CBlockPosArgumentType.blockPos())
                             .then(argument("inner radius", DoubleArgumentType.doubleArg(0, 1024))
                                 .then(argument("outer radius", DoubleArgumentType.doubleArg(0, 1024))
-                                    .executes(context -> sphereCommand(context, false))))))
-                    .then(literal("del")
-                            .then(argument("center", CBlockPosArgumentType.blockPos())
-                                .then(argument("inner radius", DoubleArgumentType.doubleArg(0, 1024))
-                                    .then(argument("outer radius", DoubleArgumentType.doubleArg(0, 1024))
-                                        .executes(context -> sphereCommand(context, true))))))
-                )
-                .then(literal("pillar")
-                    .then(literal("set")
+                                    .executes(context -> sphereCommand(context, OperationType.BREAK))))))
+            )
+            .then(literal("pillar")
+                .then(literal("set")
+                    .then(argument("pillar", IntegerArgumentType.integer(0, 9))
+                        .executes(context -> pillarCommand(context, OperationType.PLACE))))
+                .then(literal("del")
                         .then(argument("pillar", IntegerArgumentType.integer(0, 9))
-                            .executes(context -> pillarCommand(context, false))))
-                    .then(literal("del")
-                            .then(argument("pillar", IntegerArgumentType.integer(0, 9))
-                                    .executes(context -> pillarCommand(context, true))))
-                )
-                .then(literal("info")
-                    .executes(this::infoCommand))
-            );
-        });
+                                .executes(context -> pillarCommand(context, OperationType.BREAK))))
+            )
+            .then(literal("info")
+                .executes(this::infoCommand))
+        ));
     }
 
-    private int blockCommand(CommandContext<FabricClientCommandSource> context, boolean breakPacket) {
+    private int blockCommand(CommandContext<FabricClientCommandSource> context, OperationType type) {
         BlockPos pos = CBlockPosArgumentType.getCBlockPos(context, "pos");
-        if (!FillHelper.holdingCorrect(breakPacket)) {
+        if (Utils.itemIncorrect(type)) {
             context.getSource().sendFeedback(Text.literal(
-                    String.format("Not holding %s!", breakPacket ? "Smart Chisel" : "bits"))
+                    String.format("Not holding %s!", type == OperationType.BREAK ? "Smart Chisel" : "bits"))
                             .formatted(Formatting.RED));
             return -1;
         }
         else {
             context.getSource().sendFeedback(Text.literal(
-                    String.format("%s block at (%s, %s, %s)", breakPacket ? "Deleting" : "Setting", pos.getX(), pos.getY(), pos.getZ())));
-            FillHelper.fillBlocks(pos.getX(), pos.getY(), pos.getZ(), pos.getX(), pos.getY(), pos.getZ(), true, breakPacket);
+                    String.format("%s block at (%s, %s, %s)", type == OperationType.BREAK ? "Deleting" : "Setting", pos.getX(), pos.getY(), pos.getZ())));
+            FillUtils.fillBlocks(pos.getX(), pos.getY(), pos.getZ(), pos.getX(), pos.getY(), pos.getZ(), true, type == OperationType.BREAK);
             return 1;
         }
     }
 
-    private int cubeCommand(CommandContext<FabricClientCommandSource> context, boolean breakPacket) {
+    private int cubeCommand(CommandContext<FabricClientCommandSource> context, OperationType type) {
         BlockPos pos1 = CBlockPosArgumentType.getCBlockPos(context, "pos1");
         BlockPos pos2 = CBlockPosArgumentType.getCBlockPos(context, "pos2");
-        if (volume(pos1, pos2) > Config.maxVolumeCommands) {
+        if (Utils.volume(pos1, pos2) > Config.maxVolumeCommands) {
             context.getSource().sendFeedback(Text.literal(
-                            String.format("Volume %s larger than maximum of %s!", volume(pos1, pos2), Config.maxVolumeCommands))
+                            String.format("Volume %s larger than maximum of %s!", Utils.volume(pos1, pos2), Config.maxVolumeCommands))
                     .formatted(Formatting.RED));
             return -1;
         }
-        if (!FillHelper.holdingCorrect(breakPacket)) {
+        if (Utils.itemIncorrect(type)) {
             context.getSource().sendFeedback(Text.literal(
-                            String.format("Not holding %s!", breakPacket ? "Smart Chisel" : "bits"))
+                            String.format("Not holding %s!", type == OperationType.BREAK ? "Smart Chisel" : "bits"))
                     .formatted(Formatting.RED));
             return -1;
         }
         else {
             context.getSource().sendFeedback(Text.literal(
-                String.format("%s %s blocks", breakPacket ? "Deleting" : "Setting", volume(pos1, pos2))));
-            FillHelper.fillBlocks(pos1.getX(), pos1.getY(), pos1.getZ(), pos2.getX(), pos2.getY(), pos2.getZ(), true, breakPacket);
+                String.format("%s %s blocks", type == OperationType.BREAK ? "Deleting" : "Setting", Utils.volume(pos1, pos2))));
+            FillUtils.fillBlocks(pos1.getX(), pos1.getY(), pos1.getZ(), pos2.getX(), pos2.getY(), pos2.getZ(), true, type == OperationType.BREAK);
             return 1;
         }
     }
 
-    private int sphereCommand(CommandContext<FabricClientCommandSource> context, boolean breakPacket) {
+    private int sphereCommand(CommandContext<FabricClientCommandSource> context, OperationType type) {
         BlockPos pos = CBlockPosArgumentType.getCBlockPos(context, "center");
-        Double r0 = DoubleArgumentType.getDouble(context, "inner radius");
-        Double r1 = DoubleArgumentType.getDouble(context, "outer radius");
+        double r0 = DoubleArgumentType.getDouble(context, "inner radius");
+        double r1 = DoubleArgumentType.getDouble(context, "outer radius");
 
         if ((double) 4 / 3 * Math.PI * r1 * r1 * r1 > Config.maxVolumeCommands) {
             context.getSource().sendFeedback(Text.literal(
@@ -122,24 +118,24 @@ public class CommandProcessor implements ClientModInitializer {
                     .formatted(Formatting.RED));
             return -1;
         }
-        if (!FillHelper.holdingCorrect(breakPacket)) {
+        if (Utils.itemIncorrect(type)) {
             context.getSource().sendFeedback(Text.literal(
-                            String.format("Not holding %s!", breakPacket ? "Smart Chisel" : "bits"))
+                            String.format("Not holding %s!", type == OperationType.BREAK ? "Smart Chisel" : "bits"))
                     .formatted(Formatting.RED));
             return -1;
         }
         else {
             context.getSource().sendFeedback(Text.literal(
-                    String.format("%s sphere with inner radius %s and outer radius %s at (%s, %s, %s)", breakPacket ? "Deleting" : "Setting", r0, r1, pos.getX(), pos.getY(), pos.getZ())));
-            FillHelper.fillSphere(pos, r0, r1, true, breakPacket);
+                    String.format("%s sphere with inner radius %s and outer radius %s at (%s, %s, %s)", type == OperationType.BREAK ? "Deleting" : "Setting", r0, r1, pos.getX(), pos.getY(), pos.getZ())));
+            FillUtils.fillSphere(pos, r0, r1, true, type == OperationType.BREAK);
             return 1;
         }
     }
 
-    private int pillarCommand(CommandContext<FabricClientCommandSource> context, boolean breakPacket) {
-        if (!FillHelper.holdingCorrect(breakPacket)) {
+    private int pillarCommand(CommandContext<FabricClientCommandSource> context, OperationType type) {
+        if (Utils.itemIncorrect(type)) {
             context.getSource().sendFeedback(Text.literal(
-                            String.format("Not holding %s!", breakPacket ? "Smart Chisel" : "bits"))
+                            String.format("Not holding %s!", type == OperationType.BREAK ? "Smart Chisel" : "bits"))
                     .formatted(Formatting.RED));
             return -1;
         }
@@ -170,11 +166,5 @@ public class CommandProcessor implements ClientModInitializer {
             .append(Text.literal("Sets or deletes a specified end pillar (clockwise from the pillar closest to the obsidian platform)"));
         context.getSource().sendFeedback(msg);
         return 1;
-    }
-
-    private int volume(BlockPos pos1, BlockPos pos2) {
-        return (Math.abs(pos2.getX() - pos1.getX()) + 1) *
-            (Math.abs(pos2.getY() - pos1.getY()) + 1) *
-            (Math.abs(pos2.getZ() - pos1.getZ()) + 1);
     }
 }
