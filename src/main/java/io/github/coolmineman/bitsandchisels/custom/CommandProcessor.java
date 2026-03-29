@@ -55,14 +55,6 @@ public class CommandProcessor implements ClientModInitializer {
                                 .then(argument("outer radius", DoubleArgumentType.doubleArg(0, 1024))
                                     .executes(context -> sphereCommand(context, OperationType.BREAK))))))
             )
-            .then(literal("pillar")
-                .then(literal("set")
-                    .then(argument("pillar", IntegerArgumentType.integer(0, 9))
-                        .executes(context -> pillarCommand(context, OperationType.PLACE))))
-                .then(literal("del")
-                        .then(argument("pillar", IntegerArgumentType.integer(0, 9))
-                                .executes(context -> pillarCommand(context, OperationType.BREAK))))
-            )
             .then(literal("info")
                 .executes(this::infoCommand))
         ));
@@ -132,16 +124,6 @@ public class CommandProcessor implements ClientModInitializer {
         }
     }
 
-    private int pillarCommand(CommandContext<FabricClientCommandSource> context, OperationType type) {
-        if (Utils.itemIncorrect(type)) {
-            context.getSource().sendFeedback(Text.literal(
-                            String.format("Not holding %s!", type == OperationType.BREAK ? "Smart Chisel" : "bits"))
-                    .formatted(Formatting.RED));
-            return -1;
-        }
-        return 1;
-    }
-
     private int infoCommand(CommandContext<FabricClientCommandSource> context) {
         Text msg = Text.empty()
             .append(Text.literal("Advanced Bits & Chisels Info\n\n").formatted(Formatting.BOLD, Formatting.YELLOW, Formatting.UNDERLINE))
@@ -161,9 +143,7 @@ public class CommandProcessor implements ClientModInitializer {
             .append(Text.literal("/bc cube <set|del> <x1> <y1> <z1> <x2> <y2> <z2>\n").formatted(Formatting.AQUA))
             .append(Text.literal("Sets or deletes a cube defined by two corners\n\n"))
             .append(Text.literal("/bc sphere <set|del> <x1> <y1> <z1> <r0> <r1>\n").formatted(Formatting.AQUA))
-            .append(Text.literal("Sets or deletes a sphere defined by a center, inner radius, and outer radius\n\n"))
-            .append(Text.literal("/bc pillar <set|del> <number>\n").formatted(Formatting.AQUA))
-            .append(Text.literal("Sets or deletes a specified end pillar (clockwise from the pillar closest to the obsidian platform)"));
+            .append(Text.literal("Sets or deletes a sphere defined by a center, inner radius, and outer radius\n\n"));
         context.getSource().sendFeedback(msg);
         return 1;
     }
