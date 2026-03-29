@@ -2,7 +2,7 @@
 This is a modified version of the Bits and Chisels mod, which adds advanced features and removes client-side limitations on what one can do.
 
 ## Changes
-- Bits and Smart Chisels can be toggled between placing/breaking individual bits and placing/breaking entire blocks by left clicking the air.
+- Bits and Smart Chisels can be toggled between placing/breaking individual bits and placing/breaking entire blocks with a keybind (B by default).
 - Bit placement selection is persistent when unsneaking and only resets on upon left clicking a block.
 - Smart Chisel placement selection now resets upon right clicking a block.
 - Smart Chisels now destroy a single bit/block by default; sneaking and left clicking allows a selection to be created (similarly to bits).

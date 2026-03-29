@@ -59,16 +59,6 @@ public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayCh
             if (lastBreakTick > 0 && !client.options.attackKey.isPressed())
                 lastBreakTick = 0;
         });
-
-        // Move selection if player is scrolling
-        ScrollCallback.EVENT.register((yOffset) -> {
-            ClientPlayerEntity player = MinecraftClient.getInstance().player;
-            if (player.getStackInHand(Hand.MAIN_HAND).getItem() instanceof SmartChisel && player.isSprinting()) {
-                return ActionResult.FAIL;
-            }
-            return ActionResult.PASS;
-
-        });
     }
 
     public void initClient() {
