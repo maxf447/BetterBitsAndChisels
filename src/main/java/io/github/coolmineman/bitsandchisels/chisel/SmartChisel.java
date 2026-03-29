@@ -4,7 +4,9 @@ import io.github.coolmineman.bitsandchisels.BitsAndChisels;
 import io.github.coolmineman.bitsandchisels.api.BitUtils;
 import io.github.coolmineman.bitsandchisels.api.client.RedBoxCallback;
 import io.github.coolmineman.bitsandchisels.custom.*;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
+import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.client.MinecraftClient;
@@ -14,10 +16,7 @@ import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
@@ -25,8 +24,6 @@ import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
-
-import java.text.DecimalFormat;
 
 public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayChannelHandler {
     public static final Identifier PACKET_ID = new Identifier("bitsandchisels", "smart_chisel_packet");
@@ -44,6 +41,8 @@ public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayCh
     public SmartChisel(Settings settings) {
         super(ToolMaterials.IRON, settings);
         ServerPlayNetworking.registerGlobalReceiver(PACKET_ID, this);
+
+        // Process hit when player attacks block with chisel
         AttackBlockCallback.EVENT.register((player, world, hand, pos, direction) -> {
             Item i = player.getStackInHand(hand).getItem();
             if (i instanceof SmartChisel) {
@@ -51,6 +50,12 @@ public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayCh
                 return ((SmartChisel)i).interactBreakBlockClient(player, world, pos);
             }
             return ActionResult.PASS;
+        });
+
+        // Clear last break tick if player stops attacking
+        ClientTickEvents.END_CLIENT_TICK.register((client) -> {
+            if (lastBreakTick > 0 && !client.options.attackKey.isPressed())
+                lastBreakTick = 0;
         });
     }
 
