@@ -5,6 +5,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.network.PacketByteBuf;
+import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
@@ -91,11 +92,15 @@ public class PacketQueue implements ClientModInitializer {
             packetBuf.writeInt(packet.z2());
         }
 
+        // Write hand for bits placement packets
+        if (packet.type() == OperationType.PLACE)
+            packetBuf.writeBoolean(packet.hand() == Hand.MAIN_HAND);
+
         // Send packet
         ClientPlayNetworking.send(
             new Identifier(
                 "bitsandchisels",
-                packet.type() == OperationType.PLACE ? "smart_chisel_packet" : "bit_packet"
+                packet.type() == OperationType.PLACE ? "bit_packet" : "smart_chisel_packet"
             ),
         packetBuf);
     }

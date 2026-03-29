@@ -15,8 +15,8 @@ public class Utils {
     public static boolean itemIncorrect(OperationType type) {
         if (MinecraftClient.getInstance().player == null) return true;
         Item item = MinecraftClient.getInstance().player.getMainHandStack().getItem();
-        return (type != OperationType.BREAK || item != BitsAndChisels.SMART_CHISEL) &&
-                (type != OperationType.PLACE || item != BitsAndChisels.BIT_ITEM);
+        return (type == OperationType.BREAK && item != BitsAndChisels.SMART_CHISEL) ||
+               (type == OperationType.PLACE && item != BitsAndChisels.BIT_ITEM);
     }
 
     // Calculate the volume between two BlockPos

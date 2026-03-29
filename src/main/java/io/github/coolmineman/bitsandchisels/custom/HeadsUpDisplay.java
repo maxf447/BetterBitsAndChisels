@@ -56,8 +56,8 @@ public class HeadsUpDisplay {
         int s = (PacketQueue.getQueueDelay() / 1000) % 60;
 
         // Set colors
-        Formatting numColor = PacketQueue.getWaitingForItem() != null ? Formatting.GREEN : Formatting.RED;
-        Formatting otherColor = PacketQueue.getWaitingForItem() != null ? Formatting.YELLOW : Formatting.RED;
+        Formatting numColor = PacketQueue.getWaitingForItem() == null ? Formatting.GREEN : Formatting.RED;
+        Formatting otherColor = PacketQueue.getWaitingForItem() == null ? Formatting.YELLOW : Formatting.RED;
 
         // Construct message
         Text msg = Text.empty()

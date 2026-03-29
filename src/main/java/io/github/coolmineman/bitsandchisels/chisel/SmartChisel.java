@@ -178,7 +178,7 @@ public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayCh
                 // Only break if volume is smaller than maximum
                 Operation op = new Operation(
                         block, minx, miny, minz, maxx, maxy, maxz,
-                        Hand.MAIN_HAND, OperationType.PLACE, Config.unlockedMode
+                        Hand.MAIN_HAND, OperationType.BREAK, Config.unlockedMode
                 );
                 if (Utils.volume(op) <= Config.maxVolumeManual) OperationProcessor.processOperation(op);
 
