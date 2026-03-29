@@ -9,5 +9,6 @@
     "item.bitsandchisels.blueprint": "Blueprint",
     "block.bitsandchisels.bits_block": "Bit Collection Block",
     "key.bitsandchisels.toggleFullBlockMode": "Toggle Full Block Mode",
+    "key.bitsandchisels.clearQueue": "Clear Queue",
     "key.category.bitsandchisels": "Advanced Bits and Chisels"
 }

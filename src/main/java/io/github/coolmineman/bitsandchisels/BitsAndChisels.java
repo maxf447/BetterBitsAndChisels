@@ -59,6 +59,7 @@ public class BitsAndChisels implements ModInitializer {
 	public static final BitItem BIT_ITEM = new BitItem(new Item.Settings().maxCount(1_000_000_000));
 
 	public static final KeyBinding FULL_BLOCKS_ONLY_BINDING = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.bitsandchisels.toggleFullBlockMode", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_B, "key.category.bitsandchisels"));
+	public static final KeyBinding CLEAR_QUEUE_BINDING = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.bitsandchisels.clearQueue", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, "key.category.bitsandchisels"));
 
 	//Hack around "Cannot reference a field before it is defined"
 	private static ItemStack getDiamondChiselStack() {
@@ -92,6 +93,8 @@ public class BitsAndChisels implements ModInitializer {
 		ClientTickEvents.END_CLIENT_TICK.register((client) -> {
 			// Toggle full block mode if key was pressed
 			if (FULL_BLOCKS_ONLY_BINDING.wasPressed()) Config.fullBlocksOnly = !Config.fullBlocksOnly;
+			// Clear queue if key was pressed
+			if (CLEAR_QUEUE_BINDING.wasPressed()) PacketQueue.clearQueue();
 		});
 
 	}
