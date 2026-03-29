@@ -13,7 +13,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 // Global queue for packets that have yet to be sent
-public class PacketQueue implements ClientModInitializer {
+public class PacketQueue {
 
     private static final BlockingQueue<PendingPacket> packetQueue = new LinkedBlockingQueue<>();
     private static int totalQueueDelay = 0;
@@ -105,9 +105,8 @@ public class PacketQueue implements ClientModInitializer {
         packetBuf);
     }
 
-    // Start queue processing thread on mod start
-    @Override
-    public void onInitializeClient() {
+    // Start queue processing thread
+    public static void startProcessingThread() {
         new Thread(PacketQueue::queueProcessingThread).start();
     }
 }

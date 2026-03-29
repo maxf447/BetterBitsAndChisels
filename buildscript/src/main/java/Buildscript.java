@@ -54,7 +54,8 @@ public class Buildscript extends SimpleFabricProject {
             {"fabric-lifecycle-events-v1", "2.2.20+b3afc78b77"},
             {"fabric-mining-level-api-v1", "2.1.47+b3afc78b77"},
             {"fabric-message-api-v1", "5.1.9+f4b7e424df"},
-            {"fabric-command-api-v2", "2.2.10+b04edc7a81"}
+            {"fabric-command-api-v2", "2.2.10+b04edc7a81"},
+            {"fabric-key-binding-api-v1", "1.0.37+1802ada577"}
 
         };
         for (String[] module : fapiModules) {

@@ -6,10 +6,10 @@ import io.github.coolmineman.bitsandchisels.api.client.RedBoxCallback;
 import io.github.coolmineman.bitsandchisels.custom.*;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.event.player.AttackBlockCallback;
-import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.*;
 import net.minecraft.network.PacketByteBuf;
@@ -24,6 +24,8 @@ import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
+
+import static io.github.coolmineman.bitsandchisels.BitsAndChisels.FULL_BLOCKS_ONLY_BINDING;
 
 public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayChannelHandler {
     public static final Identifier PACKET_ID = new Identifier("bitsandchisels", "smart_chisel_packet");
@@ -56,6 +58,16 @@ public class SmartChisel extends ToolItem implements ServerPlayNetworking.PlayCh
         ClientTickEvents.END_CLIENT_TICK.register((client) -> {
             if (lastBreakTick > 0 && !client.options.attackKey.isPressed())
                 lastBreakTick = 0;
+        });
+
+        // Move selection if player is scrolling
+        ScrollCallback.EVENT.register((yOffset) -> {
+            ClientPlayerEntity player = MinecraftClient.getInstance().player;
+            if (player.getStackInHand(Hand.MAIN_HAND).getItem() instanceof SmartChisel && player.isSprinting()) {
+                return ActionResult.FAIL;
+            }
+            return ActionResult.PASS;
+
         });
     }
 

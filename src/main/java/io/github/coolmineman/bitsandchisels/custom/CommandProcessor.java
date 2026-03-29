@@ -13,14 +13,11 @@ import net.minecraft.util.math.BlockPos;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
 
-public class CommandProcessor implements ClientModInitializer {
+public class CommandProcessor {
 
-    @Override
-    public void onInitializeClient() {
+    public static void registerCommands() {
 
-        // Load config
         Config.loadConfig();
-
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) ->
             dispatcher.register(ClientCommandManager.literal("bc")
             .then(literal("block")
@@ -56,11 +53,11 @@ public class CommandProcessor implements ClientModInitializer {
                                     .executes(context -> sphereCommand(context, OperationType.BREAK))))))
             )
             .then(literal("info")
-                .executes(this::infoCommand))
+                .executes(CommandProcessor::infoCommand))
         ));
     }
 
-    private int blockCommand(CommandContext<FabricClientCommandSource> context, OperationType type) {
+    private static int blockCommand(CommandContext<FabricClientCommandSource> context, OperationType type) {
         BlockPos pos = CBlockPosArgumentType.getCBlockPos(context, "pos");
         if (Utils.itemIncorrect(type)) {
             context.getSource().sendFeedback(Text.literal(
@@ -76,7 +73,7 @@ public class CommandProcessor implements ClientModInitializer {
         }
     }
 
-    private int cubeCommand(CommandContext<FabricClientCommandSource> context, OperationType type) {
+    private static int cubeCommand(CommandContext<FabricClientCommandSource> context, OperationType type) {
         BlockPos pos1 = CBlockPosArgumentType.getCBlockPos(context, "pos1");
         BlockPos pos2 = CBlockPosArgumentType.getCBlockPos(context, "pos2");
         if (Utils.volume(pos1, pos2) > Config.maxVolumeCommands) {
@@ -99,7 +96,7 @@ public class CommandProcessor implements ClientModInitializer {
         }
     }
 
-    private int sphereCommand(CommandContext<FabricClientCommandSource> context, OperationType type) {
+    private static int sphereCommand(CommandContext<FabricClientCommandSource> context, OperationType type) {
         BlockPos pos = CBlockPosArgumentType.getCBlockPos(context, "center");
         double r0 = DoubleArgumentType.getDouble(context, "inner radius");
         double r1 = DoubleArgumentType.getDouble(context, "outer radius");
@@ -124,7 +121,7 @@ public class CommandProcessor implements ClientModInitializer {
         }
     }
 
-    private int infoCommand(CommandContext<FabricClientCommandSource> context) {
+    private static int infoCommand(CommandContext<FabricClientCommandSource> context) {
         Text msg = Text.empty()
             .append(Text.literal("Advanced Bits & Chisels Info\n\n").formatted(Formatting.BOLD, Formatting.YELLOW, Formatting.UNDERLINE))
             .append(Text.literal("Functionality\n\n").formatted(Formatting.GREEN, Formatting.UNDERLINE))

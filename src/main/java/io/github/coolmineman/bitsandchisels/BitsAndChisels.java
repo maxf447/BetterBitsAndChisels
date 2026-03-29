@@ -1,5 +1,13 @@
 package io.github.coolmineman.bitsandchisels;
 
+import io.github.coolmineman.bitsandchisels.custom.CommandProcessor;
+import io.github.coolmineman.bitsandchisels.custom.Config;
+import io.github.coolmineman.bitsandchisels.custom.PacketQueue;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.util.InputUtil;
+import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +58,8 @@ public class BitsAndChisels implements ModInitializer {
 
 	public static final BitItem BIT_ITEM = new BitItem(new Item.Settings().maxCount(1_000_000_000));
 
+	public static final KeyBinding FULL_BLOCKS_ONLY_BINDING = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.bitsandchisels.toggleFullBlockMode", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_RIGHT_BRACKET, "key.category.bitsandchisels"));
+
 	//Hack around "Cannot reference a field before it is defined"
 	private static ItemStack getDiamondChiselStack() {
 		return new ItemStack(DIAMOND_CHISEL);
@@ -71,6 +81,19 @@ public class BitsAndChisels implements ModInitializer {
 		Registry.register(Registries.ITEM, new Identifier(MODID, "blueprint"), BLUEPRINT);
 
 		Registry.register(Registries.ITEM_GROUP, new Identifier(MODID, MODID), ITEM_GROUP);
+
+		// Register commands
+		CommandProcessor.registerCommands();
+
+		// Start packet queue processing thread
+		PacketQueue.startProcessingThread();
+
+		// Monitor keybinds
+		ClientTickEvents.END_CLIENT_TICK.register((client) -> {
+			// Toggle full block mode if key was pressed
+			if (FULL_BLOCKS_ONLY_BINDING.wasPressed()) Config.fullBlocksOnly = !Config.fullBlocksOnly;
+		});
+
 	}
 	
 }

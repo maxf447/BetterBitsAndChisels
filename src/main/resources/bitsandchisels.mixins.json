@@ -12,7 +12,8 @@
     "BakedQuadAccessor",
     "BlockStateMixin",
     "AddedReachMixin",
-    "ToggleFullBlockMixin"
+    "ToggleFullBlockMixin",
+    "MouseScrollMixin"
   ],
   "injectors": {
     "defaultRequire": 1
