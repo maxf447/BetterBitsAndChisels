@@ -54,22 +54,6 @@ public class FillUtils {
         fillStructure(center, (int) -r1 * 16 + 8, (int) -r1 * 16 + 8, (int) -r1 * 16 + 8, arr, mainhand, breakPacket);
     }
 
-    // Fills a perimeter between points, going upwards, then uses headless pistons to destroy from the top down
-    public static void fillPerimeter(int x1, int y1, int z1, int x2, int y2, int z2) {
-        // Upwards pass
-        for (int y = y1; y <= y2; y++) {
-            fillBlocks(x1, y, z1, x2, y, z2, true, true);
-        }
-        // Downwards pass (place pistons)
-        for (int y = y2 + 1; y >= y1 + 1; y--) {
-            fillBlocks(x1, y, z1, x2, y, z2, false, false);
-        }
-        // Upwards pass (remove pistons)
-        for (int y = y1 + 1; y <= y2 + 1; y++) {
-            fillBlocks(x1, y, z1, x2, y, z2, true, true);
-        }
-    }
-
     // Fills a structure specified by a 3D array of values extending along the positive axes from the origin
     private static void fillStructure(BlockPos pos, int x1, int y1, int z1, boolean[][][] arr, boolean mainhand, boolean breakPacket) {
 

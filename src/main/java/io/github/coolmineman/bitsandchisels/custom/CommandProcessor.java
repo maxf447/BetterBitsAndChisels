@@ -57,10 +57,6 @@ public class CommandProcessor {
             )
             .then(literal("info")
                 .executes(CommandProcessor::infoCommand))
-            .then(literal("perimeter")
-                .then(argument("pos1", CBlockPosArgumentType.blockPos())
-                    .then(argument("pos2", CBlockPosArgumentType.blockPos())
-                        .executes(CommandProcessor::perimeterCommand))))
         ));
     }
 
@@ -106,15 +102,6 @@ public class CommandProcessor {
             FillUtils.fillSphere(pos, r0, r1, true, type == OperationType.BREAK);
             return 1;
         }
-    }
-
-    private static int perimeterCommand(CommandContext<FabricClientCommandSource> context) {
-        BlockPos pos1 = CBlockPosArgumentType.getCBlockPos(context, "pos1");
-        BlockPos pos2 = CBlockPosArgumentType.getCBlockPos(context, "pos2");
-        context.getSource().sendFeedback(Text.literal(
-                String.format("Building perimeter of %s blocks", Utils.volume(pos1, pos2))));
-        FillUtils.fillPerimeter(pos1.getX(), pos1.getY(), pos1.getZ(), pos2.getX(), pos2.getY(), pos2.getZ());
-        return 1;
     }
 
     private static int infoCommand(CommandContext<FabricClientCommandSource> context) {
