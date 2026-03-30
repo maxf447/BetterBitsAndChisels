@@ -1,7 +1,6 @@
 package io.github.coolmineman.bitsandchisels.custom;
 
 import io.netty.buffer.Unpooled;
-import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.network.PacketByteBuf;
