@@ -3,10 +3,13 @@ package io.github.coolmineman.bitsandchisels.custom;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import io.github.coolmineman.bitsandchisels.BitsAndChisels;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
@@ -54,23 +57,19 @@ public class CommandProcessor {
             )
             .then(literal("info")
                 .executes(CommandProcessor::infoCommand))
+            .then(literal("perimeter")
+                .then(argument("pos1", CBlockPosArgumentType.blockPos())
+                    .then(argument("pos2", CBlockPosArgumentType.blockPos())
+                        .executes(CommandProcessor::perimeterCommand))))
         ));
     }
 
     private static int blockCommand(CommandContext<FabricClientCommandSource> context, OperationType type) {
         BlockPos pos = CBlockPosArgumentType.getCBlockPos(context, "pos");
-        if (Utils.itemIncorrect(type)) {
-            context.getSource().sendFeedback(Text.literal(
-                    String.format("Not holding %s!", type == OperationType.BREAK ? "Smart Chisel" : "bits"))
-                            .formatted(Formatting.RED));
-            return -1;
-        }
-        else {
-            context.getSource().sendFeedback(Text.literal(
-                    String.format("%s block at (%s, %s, %s)", type == OperationType.BREAK ? "Deleting" : "Setting", pos.getX(), pos.getY(), pos.getZ())));
-            FillUtils.fillBlocks(pos.getX(), pos.getY(), pos.getZ(), pos.getX(), pos.getY(), pos.getZ(), true, type == OperationType.BREAK);
-            return 1;
-        }
+        context.getSource().sendFeedback(Text.literal(
+                String.format("%s block at (%s, %s, %s)", type == OperationType.BREAK ? "Deleting" : "Setting", pos.getX(), pos.getY(), pos.getZ())));
+        FillUtils.fillBlocks(pos.getX(), pos.getY(), pos.getZ(), pos.getX(), pos.getY(), pos.getZ(), true, type == OperationType.BREAK);
+        return 1;
     }
 
     private static int cubeCommand(CommandContext<FabricClientCommandSource> context, OperationType type) {
@@ -79,12 +78,6 @@ public class CommandProcessor {
         if (Utils.volume(pos1, pos2) > Config.maxVolumeCommands) {
             context.getSource().sendFeedback(Text.literal(
                             String.format("Volume %s larger than maximum of %s!", Utils.volume(pos1, pos2), Config.maxVolumeCommands))
-                    .formatted(Formatting.RED));
-            return -1;
-        }
-        if (Utils.itemIncorrect(type)) {
-            context.getSource().sendFeedback(Text.literal(
-                            String.format("Not holding %s!", type == OperationType.BREAK ? "Smart Chisel" : "bits"))
                     .formatted(Formatting.RED));
             return -1;
         }
@@ -107,18 +100,21 @@ public class CommandProcessor {
                     .formatted(Formatting.RED));
             return -1;
         }
-        if (Utils.itemIncorrect(type)) {
-            context.getSource().sendFeedback(Text.literal(
-                            String.format("Not holding %s!", type == OperationType.BREAK ? "Smart Chisel" : "bits"))
-                    .formatted(Formatting.RED));
-            return -1;
-        }
         else {
             context.getSource().sendFeedback(Text.literal(
                     String.format("%s sphere with inner radius %s and outer radius %s at (%s, %s, %s)", type == OperationType.BREAK ? "Deleting" : "Setting", r0, r1, pos.getX(), pos.getY(), pos.getZ())));
             FillUtils.fillSphere(pos, r0, r1, true, type == OperationType.BREAK);
             return 1;
         }
+    }
+
+    private static int perimeterCommand(CommandContext<FabricClientCommandSource> context) {
+        BlockPos pos1 = CBlockPosArgumentType.getCBlockPos(context, "pos1");
+        BlockPos pos2 = CBlockPosArgumentType.getCBlockPos(context, "pos2");
+        context.getSource().sendFeedback(Text.literal(
+                String.format("Building perimeter of %s blocks", Utils.volume(pos1, pos2))));
+        FillUtils.fillPerimeter(pos1.getX(), pos1.getY(), pos1.getZ(), pos2.getX(), pos2.getY(), pos2.getZ());
+        return 1;
     }
 
     private static int infoCommand(CommandContext<FabricClientCommandSource> context) {

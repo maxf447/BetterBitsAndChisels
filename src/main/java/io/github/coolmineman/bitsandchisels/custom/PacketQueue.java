@@ -48,7 +48,7 @@ public class PacketQueue {
                 totalQueueDelay -= packet.delay();
 
                 // Pause queue if user is holding incorrect item or player is not loaded
-                while (Utils.itemIncorrect(packet.type())) {
+                while (Utils.itemIncorrect(packet.type(), packet.hand())) {
                     waitingForItem = packet.type();
                     Thread.sleep(50);
                 }
